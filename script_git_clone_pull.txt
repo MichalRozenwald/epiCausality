@@ -57,7 +57,7 @@ bash
 Copy code
 git push origin main
 
-
+git push origin main (NOT MASTER)
 
 
 git clone https://github.com/MichalRozenwald/epiCausality.git
