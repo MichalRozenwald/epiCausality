@@ -39,7 +39,7 @@ Run
 
   git config --global user.email "michal.rozenwald@gmail.com"
   git config --global user.name "MichalRozenwald"
--> Yo..6!!!
+* Yo..6!!!
 to set your account's default identity.
 Omit --global to set the identity only in this repository.
 
