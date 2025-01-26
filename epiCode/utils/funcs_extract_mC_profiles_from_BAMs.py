@@ -16,10 +16,10 @@ def system_info():
     print('Processor:', platform.processor())
     print('Python version:', sys.version)
 
-def get_reference_sequence(ref_genome_file, region):
+def get_reference_sequence(ref_genome_file,  region_chr, region_start, region_end):
     """Fetch reference sequence from genome file."""
     try:
-        ref_seq = pysam.FastaFile(ref_genome_file).fetch(*region)
+        ref_seq = pysam.FastaFile(ref_genome_file).fetch(region_chr, region_start, region_end)
         ref_seq_list = list(ref_seq)
         print(ref_seq)
         print(len(ref_seq))
@@ -113,13 +113,13 @@ def visualize_data(df):
     except Exception as e:
         print("Error in visualization:", e)
 
-def create_padded_reads(df, regions_dict):
+def create_padded_reads(df, regions_dict, region_length):
     """Generate padded reads matrix."""
     try:
         read_names_unique = np.unique(df['read_name'])
         num_reads = len(read_names_unique)
         reads_dict = {name: i for i, name in enumerate(read_names_unique)}
-        padded_reads = np.full((num_reads, 30), np.nan)
+        padded_reads = np.full((num_reads, region_length), np.nan)
 
         for i in range(len(df['read_name'])):
             padded_reads[reads_dict[df['read_name'][i]], df['pos_shifted'][i]] = 1
@@ -157,31 +157,35 @@ def main():
     system_info()
 
     ref_genome_v1_1_file = Path('/home/michalula/data/ref_genomes/to_t2t_v1_1/chm13.draft_v1.1.fasta')
-    region = ('chr1', 206586162, 206586192)
-    # region_str = 'chr1:206586162-206586192'
-    t2t_v1_1_cd55_30bps = 'chr1:206586162-206586192'
-    motifs=['CG,0']
+    # t2t_v1_1_cd55_30bps     # t2t_v1_1_cd55_30bps = 'chr1:206586162-206586192'
+    region_chr = 'chr1'
+    region_start = 206586162
+    region_end = 206586192
+    region_str = region_chr + ":" + str(region_start) + "-" + str(region_end) #'chr1:206586162-206586192'
+    region_length = region_end - region_start
+    print("region_length", region_length)
 
-    ref_seq_list = get_reference_sequence(ref_genome_v1_1_file, region)
+    motifs=['CG,0']
+    ref_seq_list = get_reference_sequence(ref_genome_v1_1_file, region_chr, region_start, region_end)
 
     output_dir = create_output_directory("./dimelo_v2_output")
-    
+
     unedited_bam_path = "/home/michalula/data/cas9_nanopore/data/20241226_MR_nCATs_TcellsPrES_unedit_P2R9/passed_fast5/5mCG/to_t2t_v1_1/sort_align_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam"
 
     extract_file, extract_regions = extract_from_bam(
         bam_path=unedited_bam_path,
         ref_genome_file=ref_genome_v1_1_file,
         output_dir=output_dir,
-        regions=t2t_v1_1_cd55_30bps,
+        regions=region_str,
         motifs=motifs,
         output_name='extracted_reads'
     )
 
     if extract_file:
-        df, regions_dict = process_extracted_reads(extract_file, t2t_v1_1_cd55_30bps, motifs)
+        df, regions_dict = process_extracted_reads(extract_file, region_str, motifs)
         visualize_data(df)
 
-        padded_reads = create_padded_reads(df, regions_dict)
+        padded_reads = create_padded_reads(df, regions_dict, region_length)
         if padded_reads is not None:
             plot_padded_reads(padded_reads, ref_seq_list)
             save_padded_reads(padded_reads, output_dir, "padded_reads.npy")
