@@ -79,27 +79,27 @@ def process_extracted_reads(extract_file, regions, motifs):
             regions=regions,
             motifs=motifs
         )
-        df = pd.DataFrame({
+        reads_df = pd.DataFrame({
             'read_name': read_names,
             'mod': mods,
             'pos': reads
         }).explode('pos')
 
-        df['pos_shifted'] = df['pos'] + 15
-        return df, regions_dict
+        reads_df['pos_shifted'] = reads_df['pos'] + 15
+        return reads_df, regions_dict
     except Exception as e:
         print("Error processing extracted reads:", e)
         return None, None
 
-def visualize_data(df):
+def visualize_data(reads_df):
     """Generate visualizations for the data."""
     try:
-        df['read_name'].plot(kind='hist', bins=1600, title='Read Names Distribution')
+        reads_df['read_name'].plot(kind='hist', bins=1600, title='Read Names Distribution')
         plt.gca().spines[['top', 'right']].set_visible(False)
         plt.show()
 
         sns.scatterplot(
-            data=df,
+            data=reads_df,
             x="pos",
             y="read_name",
             hue="mod",
@@ -113,16 +113,16 @@ def visualize_data(df):
     except Exception as e:
         print("Error in visualization:", e)
 
-def create_padded_reads(df, regions_dict, region_length):
+def create_padded_reads(reads_df, regions_dict, region_length):
     """Generate padded reads matrix."""
     try:
-        read_names_unique = np.unique(df['read_name'])
+        read_names_unique = np.unique(reads_df['read_name'])
         num_reads = len(read_names_unique)
         reads_dict = {name: i for i, name in enumerate(read_names_unique)}
         padded_reads = np.full((num_reads, region_length), np.nan)
 
-        for i in range(len(df['read_name'])):
-            padded_reads[reads_dict[df['read_name'][i]], df['pos_shifted'][i]] = 1
+        for i in range(len(reads_df['read_name'])):
+            padded_reads[reads_dict[reads_df['read_name'][i]], reads_df['pos_shifted'][i]] = 1
 
         return padded_reads
     except Exception as e:
@@ -182,10 +182,10 @@ def main():
     )
 
     if extract_file:
-        df, regions_dict = process_extracted_reads(extract_file, region_str, motifs)
-        visualize_data(df)
+        reads_df, regions_dict = process_extracted_reads(reads_df, region_str, motifs)
+        visualize_data(reads_df)
 
-        padded_reads = create_padded_reads(df, regions_dict, region_length)
+        padded_reads = create_padded_reads(reads_df, regions_dict, region_length)
         if padded_reads is not None:
             plot_padded_reads(padded_reads, ref_seq_list)
             save_padded_reads(padded_reads, output_dir, "padded_reads.npy")
