@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from datetime import datetime
 from dimelo import parse_bam, plot_reads, load_processed
 
 def system_info():
@@ -115,6 +116,7 @@ def visualize_data(reads_df):
             marker="s",
             linewidth=0
         )
+        # plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
         plt.xlabel('Position')
         plt.ylabel('Read Name')
         plt.show()
@@ -144,8 +146,11 @@ def plot_padded_reads(padded_reads, ref_seq_list):
         plt.matshow(padded_reads, fignum=1)
         plt.colorbar()
         plt.title("Padded Reads Matrix")
-        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size='small') #, rotation=90)
-        # plt.xticks(range(len(seq_list)), seq_list, size='small')
+
+        # Scale font size: decreases as seq_length increases, but within reasonable bounds
+        font_size = max(2, min(8, 500 / len(ref_seq_list)))  # Now it stays between 2 and 8
+
+        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
         # plt.xlabel("Reference Sequence")
 
         plt.show()
@@ -178,11 +183,11 @@ def main():
 
 
     # Expend window size
-    expand_window_size = 50 # 50 #000
+    expand_window_size = 16 # 50 # 50 #000
     expand_window_size
     print("Expend window size by 2 * ", expand_window_size)
     region_start = 206586162 - expand_window_size
-    region_end = 206586192 + expand_window_size
+    region_end = 206586192 + expand_window_size + 1
     region_str = region_chr + ":" + str(region_start) + "-" + str(region_end) #'chr1:206586162-206586192'
     region_length = region_end - region_start
     print("region_length", region_length)
