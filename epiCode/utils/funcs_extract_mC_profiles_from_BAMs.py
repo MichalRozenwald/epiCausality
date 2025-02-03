@@ -71,8 +71,14 @@ def extract_from_bam(bam_path, ref_genome_file, output_dir, window_size=None, th
         print("Error in BAM extraction:", e)
         return None, None
 
-def process_extracted_reads(extract_file, regions, motifs):
-    """Process extracted reads into a DataFrame."""
+def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
+    """
+    Process extracted reads into a DataFrame.
+
+    Warning: make sure that the ref_seq_list was created using the same region and reference genome using the function: 
+        motifs=['CG,0']
+        ref_seq_list = get_reference_sequence(ref_genome_v1_1_file, region_chr, region_start, region_end)  
+    """
     try:
         reads, read_names, mods, regions_dict = load_processed.readwise_binary_modification_arrays(
             file=extract_file,
@@ -85,7 +91,9 @@ def process_extracted_reads(extract_file, regions, motifs):
             'pos': reads
         }).explode('pos')
 
-        reads_df['pos_shifted'] = reads_df['pos'] + 15
+        # reads_df['pos_shifted'] = reads_df['pos'] + 15
+        region_length = len(ref_seq_list)
+        reads_df['pos_shifted'] = reads_df['pos'] + (region_length // 2)
         return reads_df, regions_dict
     except Exception as e:
         print("Error processing extracted reads:", e)
@@ -152,43 +160,59 @@ def save_padded_reads(padded_reads, output_dir, file_name):
     except Exception as e:
         print("Error saving padded reads:", e)
 
+
 def main():
     """Main function to execute all tasks."""
     system_info()
 
+    experiment_name = "unedited_T_primerES_nCATS"
+    threshold_mC =  0.7 #  0.9 #0.99
+    bam_path = "/home/michalula/data/cas9_nanopore/data/20241226_MR_nCATs_TcellsPrES_unedit_P2R9/passed_fast5/5mCG/to_t2t_v1_1/sort_align_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam"
+
+    date_today = datetime.today().strftime('%Y-%m-%d')
+
     ref_genome_v1_1_file = Path('/home/michalula/data/ref_genomes/to_t2t_v1_1/chm13.draft_v1.1.fasta')
-    # t2t_v1_1_cd55_30bps     # t2t_v1_1_cd55_30bps = 'chr1:206586162-206586192'
+    reg_genome_version = "t2t_v1_1"
+    # t2t_v1_1_cd55_30bps = 'chr1:206586162-206586192'
     region_chr = 'chr1'
-    region_start = 206586162
-    region_end = 206586192
+
+
+    # Expend window size
+    expand_window_size = 50 # 50 #000
+    expand_window_size
+    print("Expend window size by 2 * ", expand_window_size)
+    region_start = 206586162 - expand_window_size
+    region_end = 206586192 + expand_window_size
     region_str = region_chr + ":" + str(region_start) + "-" + str(region_end) #'chr1:206586162-206586192'
     region_length = region_end - region_start
     print("region_length", region_length)
 
+
+    save_padded_reads_name_np = f"padded_reads_{experiment_name}_mCthresh{threshold_mC}_{reg_genome_version}_{region_str}_{date_today}.npy"
+    output_dir = create_output_directory("./dimelo_v2_output")
+
     motifs=['CG,0']
     ref_seq_list = get_reference_sequence(ref_genome_v1_1_file, region_chr, region_start, region_end)
 
-    output_dir = create_output_directory("./dimelo_v2_output")
-
-    unedited_bam_path = "/home/michalula/data/cas9_nanopore/data/20241226_MR_nCATs_TcellsPrES_unedit_P2R9/passed_fast5/5mCG/to_t2t_v1_1/sort_align_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam"
 
     extract_file, extract_regions = extract_from_bam(
-        bam_path=unedited_bam_path,
+        bam_path=bam_path,
         ref_genome_file=ref_genome_v1_1_file,
         output_dir=output_dir,
         regions=region_str,
         motifs=motifs,
-        output_name='extracted_reads'
+        output_name='extracted_reads',
+        threshold_mC=threshold_mC,
     )
 
     if extract_file:
-        reads_df, regions_dict = process_extracted_reads(reads_df, region_str, motifs)
+        reads_df, regions_dict = process_extracted_reads(extract_file, region_str, motifs, ref_seq_list)
         visualize_data(reads_df)
 
         padded_reads = create_padded_reads(reads_df, regions_dict, region_length)
         if padded_reads is not None:
             plot_padded_reads(padded_reads, ref_seq_list)
-            save_padded_reads(padded_reads, output_dir, "padded_reads.npy")
-
+            save_padded_reads(padded_reads, output_dir, save_padded_reads_name_np)
+    
 if __name__ == "__main__":
     main()
