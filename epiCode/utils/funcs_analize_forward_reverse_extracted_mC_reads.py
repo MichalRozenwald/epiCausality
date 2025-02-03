@@ -167,15 +167,21 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         print("mC sums:", mC_sums)
 
         # Visualize mC sums as bar plot
+
+        # Scale font size: decreases as seq_length increases, but within reasonable bounds
+        font_size = max(2, min(8, 500 / len(ref_seq_list)))  # Now it stays between 2 and 8
+        
         plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(mC_sums)), mC_sums)
-        plt.xticks(range(len(ref_seq_list)), ref_seq_list, size='small')
+        # plt.xticks(range(len(ref_seq_list)), ref_seq_list, size='small')
+        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
         plt.title("mC Sums Bar Plot")
         plt.show()
 
         plt.figure(figsize=(10, 5))
-        plt.scatter(np.arange(len(mC_sums)), mC_sums)        
-        # plt.xticks(range(len(ref_seq_list)), ref_seq_list, size='small')
+        plt.scatter(np.arange(len(mC_sums)), mC_sums) 
+        if len(ref_seq_list) < 160:       
+            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
         plt.title("mC Sums Scatter Plot")
         plt.show()
 
@@ -194,18 +200,21 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         CGs_all_on_fwd_C_sums = np.zeros(len(ref_seq_list))
         CGs_all_on_fwd_C_sums[CG_pair_idx] = CGs_all_sums
 
+        plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(CGs_all_sums)), CGs_all_sums)
         plt.title("Sum of mCs (fwd + rvs)")
         plt.show()
 
+        plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(CGs_all_on_fwd_C_sums)), CGs_all_on_fwd_C_sums)
-        plt.xticks(range(len(ref_seq_list)), ref_seq_list, size='small')
+        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
         plt.title("Total sum of mCs (fwd + rvs) in the T cells Cas9 data")
         plt.show()
 
         mC_fracs = CGs_all_on_fwd_C_sums / len(CGs_all)
+        plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(mC_fracs)), mC_fracs)
-        plt.xticks(range(len(ref_seq_list)), ref_seq_list, size='small')
+        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
         plt.title("Fractions of mC [mC_sums / num_reads]")
         plt.show()
 
@@ -295,25 +304,48 @@ def main():
     """
     try:
         # Define constants
+            
         experiment_name = "unedited_T_primerES_nCATS"
-        save_folder_path = "/home/michalula/code/epiCausality/epiCode/notebooks/dimelo_v2_output"
-        save_padded_reads_name_np = "padded_reads.npy"
-        ref_genome_file = "/home/michalula/data/ref_genomes/to_t2t_v1_1/chm13.draft_v1.1.fasta"
-        region_chr = "chr1"
-        region_start = 206586162
-        region_end = 206586192
+        threshold_mC =  0.7 #  0.9 #0.99
+        bam_path = "/home/michalula/data/cas9_nanopore/data/20241226_MR_nCATs_TcellsPrES_unedit_P2R9/passed_fast5/5mCG/to_t2t_v1_1/sort_align_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam"
+
+        date_today = datetime.today().strftime('%Y-%m-%d')
+
+        ref_genome_v1_1_file = Path('/home/michalula/data/ref_genomes/to_t2t_v1_1/chm13.draft_v1.1.fasta')
+        reg_genome_version = "t2t_v1_1"
+        # t2t_v1_1_cd55_30bps = 'chr1:206586162-206586192'
+        region_chr = 'chr1'
+
+        # Expend window size
+        expand_window_size = 16 # 0 # 50 # 50 #000
+        expand_window_size
+        print("Expend window size by 2 * ", expand_window_size)
+        region_start = 206586162 - expand_window_size
+        region_end = 206586192 + expand_window_size + 1
+        region_str = region_chr + ":" + str(region_start) + "-" + str(region_end) #'chr1:206586162-206586192'
+        region_length = region_end - region_start
+        print("region_length", region_length)
+
+
+        save_padded_reads_name_np = f"padded_reads_{experiment_name}_mCthresh{threshold_mC}_{reg_genome_version}_{region_str}_{date_today}.npy"
+        output_dir = create_output_directory("./dimelo_v2_output")
+
+        motifs=['CG,0']
+        ref_seq_list = get_reference_sequence(ref_genome_v1_1_file, region_chr, region_start, region_end)
+
 
         # Process pipeline
         CGs_all, C_fwd_df, G_revs_df, padded_reads_df = analize_forward_reverse_CGs_pipeline(
-            experiment_name, save_folder_path, save_padded_reads_name_np, 
-            ref_genome_file, region_chr, region_start, region_end
+            experiment_name=experiment_name, save_folder_path=output_dir, 
+            save_padded_reads_name_np=save_padded_reads_name_np, 
+            ref_genome_file=ref_genome_v1_1_file, region_chr=region_chr, region_start=region_start, region_end=region_end
         )
 
         print("Pipeline executed successfully (analize_forward_reverse_CGs_pipeline function)")
         return CGs_all, C_fwd_df, G_revs_df, padded_reads_df
 
     except Exception as e:
-        print(f"Error in main pipeline (analize_forward_reverse_CGs_pipeline function): {e}")
-
+        print(f"Error in main pipeline (analize_forward_reverse_CGs_pipeline function): {e}") 
+        
 if __name__ == "__main__":
     CGs_all, C_fwd_df, G_revs_df, padded_reads_df = main()
