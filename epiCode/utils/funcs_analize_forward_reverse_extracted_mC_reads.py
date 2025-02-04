@@ -286,7 +286,7 @@ def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, save
         fwd_count = sum(fwd_reads_bools)
         rvs_count = sum(rvs_reads_bools)
         date_today = datetime.today().strftime('%Y-%m-%d')
-        save_cpg_name_np = f"CG_combined_{experiment_name}_numFWD{fwd_count}_numRVS{rvs_count}_{save_padded_reads_name_np}"#_{date_today}.npy"
+        save_cpg_name_np = f"CG_{CGs_all.shape[1]}_units_combined_{experiment_name}_numFWD{fwd_count}_numRVS{rvs_count}_{save_padded_reads_name_np}"#_{date_today}.npy"
 
         # Save CGs_all
         save_cgs_all(CGs_all, save_folder_path, save_cpg_name_np) 
