@@ -179,10 +179,11 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         plt.show()
 
         plt.figure(figsize=(10, 5))
-        plt.scatter(np.arange(len(mC_sums)), mC_sums) 
+        # mC_fracs = CGs_all_sums / len(CGs_all) 
+        plt.scatter(np.arange(len(mC_sums)), mC_sums / len(CGs_all)) 
         if len(ref_seq_list) < 160:       
             plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
-        plt.title("mC Sums Scatter Plot")
+        plt.title(f"mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}")
         plt.show()
 
         # Heatmap of CGs_all
@@ -202,20 +203,29 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
 
         plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(CGs_all_sums)), CGs_all_sums)
-        plt.title("Sum of mCs (fwd + rvs)")
+        plt.title("Sum of mCs of CpG units (fwd + rvs)")
+        plt.show()
+
+        mC_fracs = CGs_all_sums / len(CGs_all)
+        plt.figure(figsize=(10, 5))
+        plt.bar(np.arange(len(mC_fracs)), mC_fracs)
+        plt.xticks(ticks=np.arange(CGs_all.shape[1]), labels=CGs_all.columns) #, size=font_size) # 'small') #, rotation=90)
+        plt.title(f"Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units ")
         plt.show()
 
         plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(CGs_all_on_fwd_C_sums)), CGs_all_on_fwd_C_sums)
-        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
-        plt.title("Total sum of mCs (fwd + rvs) in the T cells Cas9 data")
+        if len(ref_seq_list) < 160:       
+            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
+        plt.title("Total sum of mCs (fwd + rvs) bap plot with reference seq")
         plt.show()
 
         mC_fracs = CGs_all_on_fwd_C_sums / len(CGs_all)
         plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(mC_fracs)), mC_fracs)
-        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
-        plt.title("Fractions of mC [mC_sums / num_reads]")
+        if len(ref_seq_list) < 160:               
+            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
+        plt.title(f"Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}")
         plt.show()
 
         # Cluster maps for filtered DataFrames
