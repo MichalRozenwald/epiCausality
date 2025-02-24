@@ -173,8 +173,9 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         
         plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(mC_sums)), mC_sums)
-        # plt.xticks(range(len(ref_seq_list)), ref_seq_list, size='small')
-        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
+        if len(ref_seq_list) < 160:       
+            # plt.xticks(range(len(ref_seq_list)), ref_seq_list, size='small')
+            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
         plt.title("mC Sums Bar Plot")
         plt.show()
 
@@ -209,7 +210,8 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         mC_fracs = CGs_all_sums / len(CGs_all)
         plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(mC_fracs)), mC_fracs)
-        plt.xticks(ticks=np.arange(CGs_all.shape[1]), labels=CGs_all.columns) #, size=font_size) # 'small') #, rotation=90)
+        if len(ref_seq_list) < 160:      
+            plt.xticks(ticks=np.arange(CGs_all.shape[1]), labels=CGs_all.columns) #, size=font_size) # 'small') #, rotation=90)
         plt.title(f"Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units ")
         plt.show()
 
