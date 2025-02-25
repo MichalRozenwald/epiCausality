@@ -193,7 +193,7 @@ def plot_mC_sums_bar_aggregated_per_base(mC_sums, ref_seq_list, title="mC Sums B
     else:
         print("In plot_mC_sums_bar DataFrame columns:", df.columns)
         print("In plot_mC_sums_bar DataFrame shape:", df.shape)
-        print("In plot_mC_sums_bar DataFrame:", df)
+        # print("In plot_mC_sums_bar DataFrame:", df)
 
 
     # Create interactive bar plot using plotly.express
@@ -280,7 +280,7 @@ def plot_mC_sums_bar(mC_sums, ref_seq_list, title="mC Sums Bar Plot", yaxis_titl
     else:
         print("In plot_mC_sums_bar DataFrame columns:", df.columns)
         print("In plot_mC_sums_bar DataFrame shape:", df.shape)
-        print("In plot_mC_sums_bar DataFrame:", df)
+        # print("In plot_mC_sums_bar DataFrame:", df)
 
 
     # Create bar plot with sequential x-axis
@@ -369,7 +369,7 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         plt.show()
 
         # Visualize mC sums as bar plotly
-        plot_mC_sums_bar(mC_sums, ref_seq_list, title="mC Sums Bar Plot (Plotly)", yaxis_title="mC Sums")
+        # plot_mC_sums_bar(mC_sums, ref_seq_list, title="mC Sums Bar Plot (Plotly)", yaxis_title="mC Sums")
         
         print("(mC_sums / len(CGs_all) =", mC_sums/ len(CGs_all))
         plt.figure(figsize=(10, 5))
@@ -381,8 +381,8 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         plt.show()
 
         # Visualize mC sums as bar plotly
-        plot_mC_sums_bar(mC_sums/ len(CGs_all), ref_seq_list,
-                    title=f"mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
+        # plot_mC_sums_bar(mC_sums/ len(CGs_all), ref_seq_list,
+        #             title=f"mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
 
 
         # Compute sums and fractions
@@ -398,7 +398,7 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         plt.show()
 
         # Visualize mC sums as bars from plotly
-        plot_mC_sums_bar(CGs_all_sums, CGs_all.columns, title="Sum of mCs of CpG units (fwd + rvs)", yaxis_title="mC Sums (fwd + rvs)")
+        # plot_mC_sums_bar(CGs_all_sums, CGs_all.columns, title="Sum of mCs of CpG units (fwd + rvs)", yaxis_title="mC Sums (fwd + rvs)")
 
 
         print("CGs_all_sums / len(CGs_all) =", CGs_all_sums / len(CGs_all))
@@ -412,9 +412,9 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         plt.show()
 
         # Visualize mC sums as bars from plotly
-        plot_mC_sums_bar(CGs_all_sums / len(CGs_all), CGs_all.columns,
-                    title=f"Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)",
-                    yaxis_title="mC Fractions (fwd + rvs)")
+        # plot_mC_sums_bar(CGs_all_sums / len(CGs_all), CGs_all.columns,
+        #             title=f"Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)",
+        #             yaxis_title="mC Fractions (fwd + rvs)")
 
         print("CGs_all_on_fwd_C_sums =", CGs_all_on_fwd_C_sums)
 
@@ -427,8 +427,9 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
 
         # Visualize mC sums as bars from plotly
         plot_mC_sums_bar(CGs_all_on_fwd_C_sums, ref_seq_list, 
-                      title="Total sum of mCs (fwd + rvs) bap plot with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Sums")
+                      title=f"Total sum of mCs (fwd + rvs) bap plot with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Sums")
 
+        print("len(CGs_all) =", len(CGs_all))
         print("CGs_all_on_fwd_C_sums / len(CGs_all) =", CGs_all_on_fwd_C_sums / len(CGs_all))
 
         mC_fracs = CGs_all_on_fwd_C_sums / len(CGs_all)
@@ -439,9 +440,9 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         plt.title(f"Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}")
         plt.show()
 
-        # Visualize mC sums as bars from plotly
+        # # Visualize mC sums as bars from plotly
         plot_mC_sums_bar(CGs_all_on_fwd_C_sums / len(CGs_all), ref_seq_list, 
-                      title=f"Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Sums")
+                      title=f"Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
 
 
         # Cluster maps for filtered DataFrames
