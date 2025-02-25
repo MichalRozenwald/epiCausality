@@ -19,6 +19,9 @@ def system_info():
 
 def get_reference_sequence(ref_genome_file,  region_chr, region_start, region_end):
     """Fetch reference sequence from genome file."""
+    if not ref_genome_file.exists():
+        print(f"Reference genome file not found: {ref_genome_file}")
+        sys.exit(1)
     try:
         ref_seq = pysam.FastaFile(ref_genome_file).fetch(region_chr, region_start, region_end)
         ref_seq_list = list(ref_seq)
@@ -72,7 +75,7 @@ def extract_from_bam(bam_path, ref_genome_file, output_dir, window_size=None, th
         print("Error in BAM extraction:", e)
         return None, None
 
-def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
+def process_extracted_reads_no_fully_unmethylated(extract_file, regions, motifs, ref_seq_list):
     """
     Process extracted reads into a DataFrame.
 
@@ -100,6 +103,54 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
         print("Error processing extracted reads:", e)
         return None, None
 
+def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
+    """
+    Process extracted reads into a DataFrame, ensuring all reads (methylated and unmethylated) are included.
+    """
+    try:
+        # Extract methylation-modified positions
+        mod_coords, read_ids, mods, regions_dict = load_processed.readwise_binary_modification_arrays(
+            file=extract_file,
+            regions=regions,
+            motifs=motifs
+        )
+
+        # Get all read names (both methylated and unmethylated)
+        with h5py.File(extract_file, "r") as h5:
+            all_read_names = np.array(h5["read_name"], dtype=str)  # Extract all read names
+
+        # Create a DataFrame for methylated reads
+        reads_df = pd.DataFrame({
+            'read_name': read_ids,
+            'mod': mods,
+            'pos': mod_coords
+        })
+
+        # Identify unmethylated reads (present in BAM but missing from reads_df)
+        methylated_reads = set(reads_df['read_name'])
+        unmethylated_reads = [read for read in all_read_names if read not in methylated_reads]
+
+        # Create a DataFrame for unmethylated reads (no positions)
+        unmethylated_df = pd.DataFrame({
+            'read_name': unmethylated_reads,
+            'mod': None,
+            'pos': np.nan  # No methylation site
+        })
+
+        # Combine both dataframes
+        reads_df = pd.concat([reads_df, unmethylated_df], ignore_index=True)
+
+        # Compute shifted positions
+        region_length = len(ref_seq_list)
+        reads_df['pos_shifted'] = reads_df['pos'].apply(lambda x: x + (region_length // 2) if not np.isnan(x) else np.nan)
+
+        return reads_df, regions_dict
+
+    except Exception as e:
+        print("Error processing extracted reads:", e)
+        return None, None
+
+
 def visualize_data(reads_df):
     """Generate visualizations for the data."""
     try:
@@ -123,7 +174,8 @@ def visualize_data(reads_df):
     except Exception as e:
         print("Error in visualization:", e)
 
-def create_padded_reads(reads_df, regions_dict, region_length):
+
+def create_padded_reads_no_fully_unmethylated(reads_df, regions_dict, region_length):
     """Generate padded reads matrix."""
     try:
         read_names_unique = np.unique(reads_df['read_name'])
@@ -138,6 +190,26 @@ def create_padded_reads(reads_df, regions_dict, region_length):
     except Exception as e:
         print("Error creating padded reads matrix:", e)
         return None
+
+
+def create_padded_reads(reads_df, regions_dict, region_length):
+    """Generate padded reads matrix, including reads with no methylation."""
+    try:
+        read_names_unique = np.unique(reads_df['read_name'])
+        num_reads = len(read_names_unique)
+        reads_dict = {name: i for i, name in enumerate(read_names_unique)}
+        padded_reads = np.full((num_reads, region_length), np.nan)
+
+        for _, row in reads_df.iterrows():
+            if not np.isnan(row['pos_shifted']):  # Ignore NaN values (unmethylated sites)
+                padded_reads[reads_dict[row['read_name']], int(row['pos_shifted'])] = 1
+
+        return padded_reads
+
+    except Exception as e:
+        print("Error creating padded reads matrix:", e)
+        return None
+
 
 def plot_padded_reads(padded_reads, ref_seq_list):
     """Plot padded reads matrix using matshow with x-ticks as reference sequence."""
@@ -156,6 +228,7 @@ def plot_padded_reads(padded_reads, ref_seq_list):
         plt.show()
     except Exception as e:
         print("Error plotting padded reads matrix:", e)
+
 
 def save_padded_reads(padded_reads, output_dir, file_name):
     """Save padded reads as a NumPy array."""
