@@ -1,12 +1,25 @@
 import os
+import sys
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
 from pathlib import Path
-import sys
 from datetime import datetime
 import plotly.graph_objects as go
+import plotly.express as px
+import plotly.io as pio
+from IPython.display import display
+
+# !  python3 -m pip install tensorflow
+# !  python3 -m pip install keras
+# ! python3 -m pip install 'scikit-learn'
+# ! python3 -m pip install shap
+# ! python3 -m  pip uninstall -y plotly kaleido
+# ! python3 -m  pip install --upgrade plotly kaleido
+
+pio.renderers.default = "vscode"
+
 
 # Add custom function paths
 sys.path.append("/home/michalula/code/epiCausality/epiCode/utils/")
@@ -139,6 +152,182 @@ def generate_cgs_all(padded_reads_df, ref_seq_list):
         print(f"Error generating CGs_all: {e}")
         raise
 
+    
+def plot_mC_sums_bar_aggregated_per_base(mC_sums, ref_seq_list, title="mC Sums Bar Plot"):
+    """
+    Creates an interactive bar plot of mC_sums using Plotly.
+
+    Parameters:
+    - mC_sums: List or array of mC sums values.
+    - ref_seq_list: List of reference sequence labels (same length as mC_sums).
+
+    Returns:
+    - A Plotly figure.
+
+    # Example usage
+    ref_seq_list = ['A', 'T', 'C', 'G', 'A', 'C', 'T', 'G']
+    mC_sums = np.random.randint(0, 100, len(ref_seq_list))
+
+    fig = plot_mC_sums_bar(mC_sums, ref_seq_list)
+    fig.show()
+    """
+    if len(mC_sums) != len(ref_seq_list):
+        raise ValueError("mC_sums and ref_seq_list must have the same length.")
+    if mC_sums is None or ref_seq_list is None:
+        raise ValueError("mC_sums or ref_seq_list is None!")
+    if len(mC_sums) == 0 or len(ref_seq_list) == 0:
+        raise ValueError("mC_sums or ref_seq_list is empty!")
+    if len(mC_sums) != len(ref_seq_list):
+        raise ValueError("Mismatch: mC_sums and ref_seq_list lengths are different!")
+
+    # Scale font size: decreases as seq_length increases, but stays within reasonable bounds
+    font_size = max(2, min(8, 500 / len(ref_seq_list)))
+
+    # Create DataFrame for Plotly
+    df = pd.DataFrame({
+        "Reference Sequence": ref_seq_list,
+        "mC Sums": mC_sums
+    })
+    if df is None or df.empty:
+        raise ValueError("Error: DataFrame is empty or None, cannot generate plot")
+    else:
+        print("In plot_mC_sums_bar DataFrame columns:", df.columns)
+        print("In plot_mC_sums_bar DataFrame shape:", df.shape)
+        print("In plot_mC_sums_bar DataFrame:", df)
+
+
+    # Create interactive bar plot using plotly.express
+    fig = px.bar(
+        df, 
+        x="Reference Sequence", 
+        y="mC Sums",
+        text_auto=True
+    )
+    
+    if fig is None:
+        raise ValueError("❌ Plotly failed to create a figure. Check input data!")
+    # else:
+    #     print("✅ Figure created successfully:", type(fig))
+
+    # Update layout for better readability
+    fig.update_layout(
+        title=title,
+        xaxis_title="Reference Sequence",
+        yaxis_title="mC Sums",
+        font=dict(size=font_size),
+    )
+
+    if fig is None:
+        raise ValueError("❌  Post fig.update_layout Plotly failed to create a figure. Check input data!")
+    else:
+        print("✅ Figure created successfully  Post fig.update_layout() :", type(fig))
+
+    # fig.show()  # Ensure this is executed to render the plot
+    # pio.show(fig)
+
+    # Show the figure using multiple methods
+    try:
+        fig.show()
+        # pio.show(fig)
+        # display(fig)
+    except Exception as e:
+        print("❌ Error displaying figure:", e)
+        fig.write_html("mC_sums_plot.html")
+        print("✅ Plot saved as 'mC_sums_plot.html'. Open it in a browser.")
+
+    return fig
+
+    
+def plot_mC_sums_bar(mC_sums, ref_seq_list, title="mC Sums Bar Plot", yaxis_title="mC Sums"):
+    """
+    Creates an interactive bar plot of mC_sums using Plotly.
+
+    Parameters:
+    - mC_sums: List or array of mC sums values.
+    - ref_seq_list: List of reference sequence labels (same length as mC_sums).
+
+    Returns:
+    - A Plotly figure.
+
+    # Example usage
+    ref_seq_list = ['A', 'T', 'C', 'G', 'A', 'C', 'T', 'G']
+    mC_sums = np.random.randint(0, 100, len(ref_seq_list))
+
+    fig = plot_mC_sums_bar(mC_sums, ref_seq_list)
+    fig.show()
+    """
+    if len(mC_sums) != len(ref_seq_list):
+        raise ValueError("mC_sums and ref_seq_list must have the same length.")
+    if mC_sums is None or ref_seq_list is None:
+        raise ValueError("mC_sums or ref_seq_list is None!")
+    if len(mC_sums) == 0 or len(ref_seq_list) == 0:
+        raise ValueError("mC_sums or ref_seq_list is empty!")
+    if len(mC_sums) != len(ref_seq_list):
+        raise ValueError("Mismatch: mC_sums and ref_seq_list lengths are different!")
+
+    # Scale font size: decreases as seq_length increases, but stays within reasonable bounds
+    font_size = max(2, min(8, 500 / len(ref_seq_list)))
+
+    # Create DataFrame and add an index column
+    df = pd.DataFrame({
+        "Index": range(len(ref_seq_list)),  # Ensure sequence order
+        "Reference Sequence": ref_seq_list,
+        "mC Sums": mC_sums
+    })
+
+    if df is None or df.empty:
+        raise ValueError("Error: DataFrame is empty or None, cannot generate plot")
+    else:
+        print("In plot_mC_sums_bar DataFrame columns:", df.columns)
+        print("In plot_mC_sums_bar DataFrame shape:", df.shape)
+        print("In plot_mC_sums_bar DataFrame:", df)
+
+
+    # Create bar plot with sequential x-axis
+    fig = px.bar(df, 
+                 x="Index",  # Use index instead of 'Reference Sequence' directly
+                 y="mC Sums",
+                 text_auto=True)
+
+    
+    if fig is None:
+        raise ValueError("❌ Plotly failed to create a figure. Check input data!")
+    # else:
+    #     print("✅ Figure created successfully:", type(fig))
+
+    # Update x-axis to show sequence labels but preserve order
+    fig.update_layout(
+        title=title,
+        xaxis=dict(
+            tickmode="array",
+            tickvals=df["Index"],
+            ticktext=df["Reference Sequence"],  # Show original sequence
+        ),
+        yaxis_title=yaxis_title
+    )
+    
+
+    if fig is None:
+        raise ValueError("❌  Post fig.update_layout Plotly failed to create a figure. Check input data!")
+    else:
+        print("✅ Figure created successfully  Post fig.update_layout() :", type(fig))
+
+    # fig.show()  # Ensure this is executed to render the plot
+    # pio.show(fig)
+
+    # Show the figure using multiple methods
+    try:
+        fig.show()
+        # pio.show(fig)
+        # display(fig)
+    except Exception as e:
+        print("❌ Error displaying figure:", e)
+        fig.write_html("mC_sums_plot.html")
+        print("✅ Plot saved as 'mC_sums_plot.html'. Open it in a browser.")
+
+    return fig
+
+
 
 def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, ref_seq_list, fwd_reads_bools, rvs_reads_bools):
     """
@@ -166,11 +355,11 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         mC_sums = np.nansum(padded_reads_df.values, axis=0)
         print("mC sums:", mC_sums)
 
-        # Visualize mC sums as bar plot
-
         # Scale font size: decreases as seq_length increases, but within reasonable bounds
         font_size = max(2, min(8, 500 / len(ref_seq_list)))  # Now it stays between 2 and 8
         
+        print("(mC_sums  =", mC_sums)
+
         plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(mC_sums)), mC_sums)
         if len(ref_seq_list) < 160:       
@@ -179,12 +368,89 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         plt.title("mC Sums Bar Plot")
         plt.show()
 
+        # Visualize mC sums as bar plotly
+        plot_mC_sums_bar(mC_sums, ref_seq_list, title="mC Sums Bar Plot (Plotly)", yaxis_title="mC Sums")
+        
+        print("(mC_sums / len(CGs_all) =", mC_sums/ len(CGs_all))
         plt.figure(figsize=(10, 5))
         # mC_fracs = CGs_all_sums / len(CGs_all) 
         plt.scatter(np.arange(len(mC_sums)), mC_sums / len(CGs_all)) 
         if len(ref_seq_list) < 160:       
             plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
         plt.title(f"mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}")
+        plt.show()
+
+        # Visualize mC sums as bar plotly
+        plot_mC_sums_bar(mC_sums/ len(CGs_all), ref_seq_list,
+                    title=f"mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
+
+
+        # Compute sums and fractions
+        CGs_all_sums = np.nansum(CGs_all.values, axis=0)
+        CGs_all_on_fwd_C_sums = np.zeros(len(ref_seq_list))
+        CGs_all_on_fwd_C_sums[CG_pair_idx] = CGs_all_sums
+
+        print("CGs_all_sums  =", CGs_all_sums)
+
+        plt.figure(figsize=(10, 5))
+        plt.bar(np.arange(len(CGs_all_sums)), CGs_all_sums)
+        plt.title("Sum of mCs of CpG units (fwd + rvs)")
+        plt.show()
+
+        # Visualize mC sums as bars from plotly
+        plot_mC_sums_bar(CGs_all_sums, CGs_all.columns, title="Sum of mCs of CpG units (fwd + rvs)", yaxis_title="mC Sums (fwd + rvs)")
+
+
+        print("CGs_all_sums / len(CGs_all) =", CGs_all_sums / len(CGs_all))
+
+        mC_fracs = CGs_all_sums / len(CGs_all)
+        plt.figure(figsize=(10, 5))
+        plt.bar(np.arange(len(mC_fracs)), mC_fracs)
+        if len(ref_seq_list) < 160:      
+            plt.xticks(ticks=np.arange(CGs_all.shape[1]), labels=CGs_all.columns) #, size=font_size) # 'small') #, rotation=90)
+        plt.title(f"Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)")
+        plt.show()
+
+        # Visualize mC sums as bars from plotly
+        plot_mC_sums_bar(CGs_all_sums / len(CGs_all), CGs_all.columns,
+                    title=f"Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)",
+                    yaxis_title="mC Fractions (fwd + rvs)")
+
+        print("CGs_all_on_fwd_C_sums =", CGs_all_on_fwd_C_sums)
+
+        plt.figure(figsize=(10, 5))
+        plt.bar(np.arange(len(CGs_all_on_fwd_C_sums)), CGs_all_on_fwd_C_sums)
+        if len(ref_seq_list) < 160:       
+            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
+        plt.title("Total sum of mCs (fwd + rvs) bap plot with reference seq")
+        plt.show()
+
+        # Visualize mC sums as bars from plotly
+        plot_mC_sums_bar(CGs_all_on_fwd_C_sums, ref_seq_list, 
+                      title="Total sum of mCs (fwd + rvs) bap plot with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Sums")
+
+        print("CGs_all_on_fwd_C_sums / len(CGs_all) =", CGs_all_on_fwd_C_sums / len(CGs_all))
+
+        mC_fracs = CGs_all_on_fwd_C_sums / len(CGs_all)
+        plt.figure(figsize=(10, 5))
+        plt.bar(np.arange(len(mC_fracs)), mC_fracs)
+        if len(ref_seq_list) < 160:               
+            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
+        plt.title(f"Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}")
+        plt.show()
+
+        # Visualize mC sums as bars from plotly
+        plot_mC_sums_bar(CGs_all_on_fwd_C_sums / len(CGs_all), ref_seq_list, 
+                      title=f"Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Sums")
+
+
+        # Cluster maps for filtered DataFrames
+        sns.clustermap(C_fwd_df.fillna(-1), col_cluster=False)
+        plt.title("Filtered Forward Reads ClusterMap")
+        plt.show()
+
+        sns.clustermap(G_revs_df.fillna(-1), col_cluster=False)
+        plt.title("Filtered Reverse Reads ClusterMap")
         plt.show()
 
         # Heatmap of CGs_all
@@ -195,48 +461,6 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         # Clustered Heatmap of CGs_all
         sns.clustermap(CGs_all.fillna(-1), col_cluster=False)
         plt.title(f"Clustered CGs_all (Forward and Reverse) (bright = mC, dark = C) ClusterMap\n(Fwd: {sum(fwd_reads_bools)}, Rev: {sum(rvs_reads_bools)})")
-        plt.show()
-
-        # Compute sums and fractions
-        CGs_all_sums = np.nansum(CGs_all.values, axis=0)
-        CGs_all_on_fwd_C_sums = np.zeros(len(ref_seq_list))
-        CGs_all_on_fwd_C_sums[CG_pair_idx] = CGs_all_sums
-
-        plt.figure(figsize=(10, 5))
-        plt.bar(np.arange(len(CGs_all_sums)), CGs_all_sums)
-        plt.title("Sum of mCs of CpG units (fwd + rvs)")
-        plt.show()
-
-        mC_fracs = CGs_all_sums / len(CGs_all)
-        plt.figure(figsize=(10, 5))
-        plt.bar(np.arange(len(mC_fracs)), mC_fracs)
-        if len(ref_seq_list) < 160:      
-            plt.xticks(ticks=np.arange(CGs_all.shape[1]), labels=CGs_all.columns) #, size=font_size) # 'small') #, rotation=90)
-        plt.title(f"Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units ")
-        plt.show()
-
-        plt.figure(figsize=(10, 5))
-        plt.bar(np.arange(len(CGs_all_on_fwd_C_sums)), CGs_all_on_fwd_C_sums)
-        if len(ref_seq_list) < 160:       
-            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
-        plt.title("Total sum of mCs (fwd + rvs) bap plot with reference seq")
-        plt.show()
-
-        mC_fracs = CGs_all_on_fwd_C_sums / len(CGs_all)
-        plt.figure(figsize=(10, 5))
-        plt.bar(np.arange(len(mC_fracs)), mC_fracs)
-        if len(ref_seq_list) < 160:               
-            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
-        plt.title(f"Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}")
-        plt.show()
-
-        # Cluster maps for filtered DataFrames
-        sns.clustermap(C_fwd_df.fillna(-1), col_cluster=False)
-        plt.title("Filtered Forward Reads ClusterMap")
-        plt.show()
-
-        sns.clustermap(G_revs_df.fillna(-1), col_cluster=False)
-        plt.title("Filtered Reverse Reads ClusterMap")
         plt.show()
 
     except Exception as e:
