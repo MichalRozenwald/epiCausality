@@ -8,6 +8,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime
 from dimelo import parse_bam, plot_reads, load_processed
+import h5py
+
 
 def system_info():
     """Print system information."""
@@ -103,6 +105,10 @@ def process_extracted_reads_no_fully_unmethylated(extract_file, regions, motifs,
         print("Error processing extracted reads:", e)
         return None, None
 
+import pandas as pd
+import numpy as np
+import h5py
+
 def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
     """
     Process extracted reads into a DataFrame, ensuring all reads (methylated and unmethylated) are included.
@@ -119,12 +125,18 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
         with h5py.File(extract_file, "r") as h5:
             all_read_names = np.array(h5["read_name"], dtype=str)  # Extract all read names
 
+        # Convert read IDs to strings to avoid type mismatches
+        read_ids = np.array(read_ids, dtype=str)
+
         # Create a DataFrame for methylated reads
         reads_df = pd.DataFrame({
             'read_name': read_ids,
             'mod': mods,
             'pos': mod_coords
         })
+
+        # Ensure 'pos' is converted to numeric type
+        reads_df['pos'] = pd.to_numeric(reads_df['pos'], errors='coerce')
 
         # Identify unmethylated reads (present in BAM but missing from reads_df)
         methylated_reads = set(reads_df['read_name'])
@@ -137,12 +149,17 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
             'pos': np.nan  # No methylation site
         })
 
-        # Combine both dataframes
+        # Combine both DataFrames
         reads_df = pd.concat([reads_df, unmethylated_df], ignore_index=True)
+
+        # Ensure 'pos' is numeric for all rows
+        reads_df['pos'] = pd.to_numeric(reads_df['pos'], errors='coerce')
 
         # Compute shifted positions
         region_length = len(ref_seq_list)
-        reads_df['pos_shifted'] = reads_df['pos'].apply(lambda x: x + (region_length // 2) if not np.isnan(x) else np.nan)
+        reads_df['pos_shifted'] = reads_df['pos'].apply(
+            lambda x: int(x + (region_length // 2)) if not np.isnan(x) else -1
+        )
 
         return reads_df, regions_dict
 
@@ -151,7 +168,8 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
         return None, None
 
 
-def visualize_data(reads_df):
+
+def visualize_data_old(reads_df):
     """Generate visualizations for the data."""
     try:
         reads_df['read_name'].plot(kind='hist', bins=1600, title='Read Names Distribution')
@@ -174,6 +192,35 @@ def visualize_data(reads_df):
     except Exception as e:
         print("Error in visualization:", e)
 
+def visualize_data(reads_df):
+    """Generate visualizations for the data."""
+    try:
+        # Ensure 'pos' is numeric and drop NaNs
+        reads_df = reads_df.copy()  # Avoid modifying the original DataFrame
+        reads_df['pos'] = pd.to_numeric(reads_df['pos'], errors='coerce')
+        reads_df = reads_df.dropna(subset=['pos'])  # Remove unmethylated reads for plotting
+
+        # Histogram of read distribution
+        reads_df['read_name'].value_counts().plot(kind='bar', title='Read Names Distribution')
+        plt.gca().spines[['top', 'right']].set_visible(False)
+        plt.show()
+
+        # Scatter plot of modifications
+        sns.scatterplot(
+            data=reads_df,
+            x="pos",
+            y="read_name",
+            hue="mod",
+            s=0.5,
+            marker="s",
+            linewidth=0
+        )
+
+        plt.xlabel('Position')
+        plt.ylabel('Read Name')
+        plt.show()
+    except Exception as e:
+        print("Error in visualization:", e)
 
 def create_padded_reads_no_fully_unmethylated(reads_df, regions_dict, region_length):
     """Generate padded reads matrix."""
@@ -191,17 +238,19 @@ def create_padded_reads_no_fully_unmethylated(reads_df, regions_dict, region_len
         print("Error creating padded reads matrix:", e)
         return None
 
-
 def create_padded_reads(reads_df, regions_dict, region_length):
     """Generate padded reads matrix, including reads with no methylation."""
     try:
+        # Ensure 'pos_shifted' is numeric
+        reads_df['pos_shifted'] = pd.to_numeric(reads_df['pos_shifted'], errors='coerce')
+
         read_names_unique = np.unique(reads_df['read_name'])
         num_reads = len(read_names_unique)
         reads_dict = {name: i for i, name in enumerate(read_names_unique)}
         padded_reads = np.full((num_reads, region_length), np.nan)
 
         for _, row in reads_df.iterrows():
-            if not np.isnan(row['pos_shifted']):  # Ignore NaN values (unmethylated sites)
+            if row['pos_shifted'] >= 0:  # Ignore unmethylated reads (set as -1)
                 padded_reads[reads_dict[row['read_name']], int(row['pos_shifted'])] = 1
 
         return padded_reads
