@@ -332,14 +332,23 @@ def main():
         threshold_mC=threshold_mC,
     )
 
+    keep_unmethylated_reads = False
     if extract_file:
-        reads_df, regions_dict = process_extracted_reads(extract_file, region_str, motifs, ref_seq_list)
-        visualize_data(reads_df)
+        if keep_unmethylated_reads:
+            reads_df, regions_dict = process_extracted_reads(extract_file, region_str, motifs, ref_seq_list)
+            visualize_data(reads_df)
 
-        padded_reads = create_padded_reads(reads_df, regions_dict, region_length)
+            padded_reads = create_padded_reads(reads_df, regions_dict, region_length)
+        else:
+
+            reads_df, regions_dict = process_extracted_reads_no_fully_unmethylated(extract_file, region_str, motifs, ref_seq_list)
+            visualize_data(reads_df)
+            padded_reads = create_padded_reads_no_fully_unmethylated(reads_df, regions_dict, region_length)
+        
         if padded_reads is not None:
             plot_padded_reads(padded_reads, ref_seq_list)
             save_padded_reads(padded_reads, output_dir, save_padded_reads_name_np)
+    
     
 if __name__ == "__main__":
     main()
