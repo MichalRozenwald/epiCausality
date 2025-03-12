@@ -203,7 +203,9 @@ def plot_mC_sums_bar_aggregated_per_base(mC_sums, ref_seq_list, title="mC Sums B
         y="mC Sums",
         text_auto=True
     )
-    
+    # fig.update_xaxes(tickangle= -90)  # Rotate x-axis labels for better readability
+    fig.update_xaxes(tickangle= 90, font=dict(size=50))  # Rotate x-axis labels for better readability
+
     if fig is None:
         raise ValueError("❌ Plotly failed to create a figure. Check input data!")
     # else:
@@ -287,25 +289,40 @@ def plot_mC_sums_bar(mC_sums, ref_seq_list, title="mC Sums Bar Plot", yaxis_titl
     fig = px.bar(df, 
                  x="Index",  # Use index instead of 'Reference Sequence' directly
                  y="mC Sums",
-                 text_auto=True)
+                 text_auto=True,
+                #  labels={"Index": "Reference Sequence"}
+                 )
 
-    
+    # # Update x-axis to show sequence labels but preserve order
+    # fig.update_layout(
+    #     title=title,
+    #     xaxis=dict(
+    #         tickmode="array",
+    #         tickvals=df["Index"],
+    #         ticktext=df["Reference Sequence"],  # Show original sequence
+    #     ),
+    #     yaxis_title=yaxis_title
+    # )
+    # fig.update_xaxes(tickangle= 90, font=dict(size=50))  # Rotate x-axis labels for better readability
+        # Update x-axis to show sequence labels without grouping
+    fig.update_layout(
+        title=title,
+        xaxis=dict(
+            tickmode="array",
+            tickvals=df["Index"],  # Set tick positions
+            ticktext=df["Reference Sequence"],  # Show original sequence labels
+        ),
+        yaxis_title="mC Sums"
+    )
+
+    # ✅ Rotate x-axis labels and set font size
+    fig.update_xaxes(tickangle=0, tickfont=dict(size=10))  # Adjust size as needed
+
     if fig is None:
         raise ValueError("❌ Plotly failed to create a figure. Check input data!")
     # else:
     #     print("✅ Figure created successfully:", type(fig))
 
-    # Update x-axis to show sequence labels but preserve order
-    fig.update_layout(
-        title=title,
-        xaxis=dict(
-            tickmode="array",
-            tickvals=df["Index"],
-            ticktext=df["Reference Sequence"],  # Show original sequence
-        ),
-        yaxis_title=yaxis_title
-    )
-    
 
     if fig is None:
         raise ValueError("❌  Post fig.update_layout Plotly failed to create a figure. Check input data!")
