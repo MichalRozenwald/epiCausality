@@ -382,11 +382,11 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         if len(ref_seq_list) < 160:       
             # plt.xticks(range(len(ref_seq_list)), ref_seq_list, size='small')
             plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
-        plt.title(f"{experiment_name}\n mC Sums Bar Plot")
+        plt.title(f"{experiment_name} mC Sums Bar Plot")
         plt.show()
 
         # Visualize mC sums as bar plotly
-        plot_mC_sums_bar(mC_sums, ref_seq_list, title=f"{experiment_name}\nmC Sums Bar Plot (Plotly)", yaxis_title="mC Sums")
+        plot_mC_sums_bar(mC_sums, ref_seq_list, title=f"{experiment_name}<br> mC Sums Bar Plot (Plotly)", yaxis_title="mC Sums")
         
         print("(mC_sums / len(CGs_all) =", mC_sums/ len(CGs_all))
         plt.figure(figsize=(10, 5))
@@ -399,7 +399,7 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
 
         # Visualize mC sums as bar plotly
         plot_mC_sums_bar(mC_sums/ len(CGs_all), ref_seq_list,
-                    title=f"{experiment_name}\n mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
+                    title=f"{experiment_name}<br> mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
 
 
         # Compute sums and fractions
@@ -430,7 +430,7 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
 
         # Visualize mC sums as bars from plotly
         plot_mC_sums_bar(CGs_all_sums / len(CGs_all), CGs_all.columns,
-                    title=f"{experiment_name}\n Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)",
+                    title=f"{experiment_name}<br> Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)",
                     yaxis_title="mC Fractions (fwd + rvs)")
 
         print("CGs_all_on_fwd_C_sums =", CGs_all_on_fwd_C_sums)
@@ -444,7 +444,7 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
 
         # Visualize mC sums as bars from plotly
         plot_mC_sums_bar(CGs_all_on_fwd_C_sums, ref_seq_list, 
-                      title=f"{experiment_name}\n Total sum of mCs (fwd + rvs) bap plot with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Sums")
+                      title=f"{experiment_name}<br> Total sum of mCs (fwd + rvs) bap plot with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Sums")
 
         print("len(CGs_all) =", len(CGs_all))
         print("CGs_all_on_fwd_C_sums / len(CGs_all) =", CGs_all_on_fwd_C_sums / len(CGs_all))
@@ -459,7 +459,7 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
 
         # # Visualize mC sums as bars from plotly
         plot_mC_sums_bar(CGs_all_on_fwd_C_sums / len(CGs_all), ref_seq_list, 
-                      title=f"{experiment_name}\n Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
+                      title=f"{experiment_name}<br> Fractions of mC [mC_sums / num_reads] with reference seq, num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
 
 
         # Cluster maps for filtered DataFrames
