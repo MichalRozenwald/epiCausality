@@ -1,0 +1,2 @@
+# Ignore all padded*.npy files
+padded_reads*.npy
