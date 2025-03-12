@@ -181,7 +181,7 @@ def plot_mC_sums_bar_aggregated_per_base(mC_sums, ref_seq_list, title=f"mC Sums 
         raise ValueError("Mismatch: mC_sums and ref_seq_list lengths are different!")
 
     # Scale font size: decreases as seq_length increases, but stays within reasonable bounds
-    font_size = max(2, min(8, 500 / len(ref_seq_list)))
+    font_size = max(2, min(8, 300 / len(ref_seq_list)))
 
     # Create DataFrame for Plotly
     df = pd.DataFrame({
@@ -204,7 +204,7 @@ def plot_mC_sums_bar_aggregated_per_base(mC_sums, ref_seq_list, title=f"mC Sums 
         text_auto=True
     )
     # fig.update_xaxes(tickangle= -90)  # Rotate x-axis labels for better readability
-    fig.update_xaxes(tickangle= 90, font=dict(size=50))  # Rotate x-axis labels for better readability
+    fig.update_xaxes(tickangle= 90, font=dict(size=4))  # Rotate x-axis labels for better readability
 
     if fig is None:
         raise ValueError("❌ Plotly failed to create a figure. Check input data!")
@@ -216,7 +216,7 @@ def plot_mC_sums_bar_aggregated_per_base(mC_sums, ref_seq_list, title=f"mC Sums 
         title=title,
         xaxis_title="Reference Sequence",
         yaxis_title="mC Sums",
-        font=dict(size=font_size),
+        font=dict(size=5),
     )
 
     if fig is None:
@@ -316,7 +316,7 @@ def plot_mC_sums_bar(mC_sums, ref_seq_list, title="mC Sums Bar Plot", yaxis_titl
     )
 
     # ✅ Rotate x-axis labels and set font size
-    fig.update_xaxes(tickangle=0, tickfont=dict(size=10))  # Adjust size as needed
+    fig.update_xaxes(tickangle=0, tickfont=dict(size=5))  # Adjust size as needed
 
     if fig is None:
         raise ValueError("❌ Plotly failed to create a figure. Check input data!")
