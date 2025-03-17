@@ -88,6 +88,8 @@ bcftools query -l /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Ge
 samtools faidx /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa
 ls -lh /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa.fai
 
+
+conda activate whatshap-env 
 # let's randomly select NA21116 #TODO - explore which sample to use!!! 
 whatshap haplotag \
     --reference /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa \
@@ -96,7 +98,8 @@ whatshap haplotag \
     /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
     ./sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam \
     | samtools view -@ 4 -b -o ./haplotyped/sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.haplotagged.bam
-
+# Started running whatshap haplotag ~3:20pm 
+# Finished running whatshap haplotag ~
 
 
 # samtools view -h 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.haplotagged.sorted.bam -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.hp1.sorted.bam -
