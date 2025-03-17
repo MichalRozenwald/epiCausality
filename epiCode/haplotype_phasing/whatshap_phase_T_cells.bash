@@ -73,17 +73,36 @@ wget https://s3-us-west-2.amazonaws.com/human-pangenomics/T2T/CHM13/assemblies/v
 
 # Haplotype phasing of T cells using whatshap
 cd /home/michalula/data/cas9_nanopore/data/20241226_MR_nCATs_TcellsPrES_unedit_P2R9/passed_fast5/5mCG/to_t2t_v2_0/
+mkdir haplotyped
+
+# whatshap haplotag \
+#     --reference /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa \
+#     --ignore-read-groups \
+#     /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
+#     ./sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam \
+#     | samtools view -@ 4 -b -o ./haplotyped/sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.haplotagged.bam
+# ERROR about the vcf file
+conda install -c bioconda bcftools
+bcftools query -l /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
+# ls /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/
+samtools faidx /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa
+ls -lh /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa.fai
+
+# let's randomly select NA21116 #TODO - explore which sample to use!!! 
 whatshap haplotag \
     --reference /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa \
     --ignore-read-groups \
+    --sample NA21116 \
     /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
     ./sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam \
-    | samtools view -@ 4 -b -o ./sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.haplotagged.bam
+    | samtools view -@ 4 -b -o ./haplotyped/sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.haplotagged.bam
+
+
 
 # samtools view -h 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.haplotagged.sorted.bam -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.hp1.sorted.bam -
-samtools view -h ./sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.haplotagged.bam  -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o  ./sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.Haplotype_1.bam 
+samtools view -h ./haplotyped/sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.haplotagged.bam  -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o  ./haplotyped/sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.Haplotype_1.bam 
 
 
 # samtools view -h 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.haplotagged.sorted.bam -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.hp2.sorted.bam -
-samtools view -h ./sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.haplotagged.bam  -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o  ./sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.Haplotype_2.bam 
+samtools view -h ./haplotyped/sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.haplotagged.bam  -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o  ./haplotyped/sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.Haplotype_2.bam 
 
