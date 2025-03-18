@@ -25,7 +25,8 @@ def get_reference_sequence(ref_genome_file,  region_chr, region_start, region_en
         print(f"Reference genome file not found: {ref_genome_file}")
         sys.exit(1)
     try:
-        ref_seq = pysam.FastaFile(ref_genome_file).fetch(region_chr, region_start, region_end)
+        # ref_seq = pysam.FastaFile(ref_genome_file).fetch(region_chr, region_start-1, region_end-1) # removing 1 from the coord indexes s the reference genome starts with 1 and the pysam.FastaFile is 0-based and the coordinates are the index-1
+        ref_seq = pysam.FastaFile(ref_genome_file).fetch(region_chr, region_start, region_end) # removing 1 from the coord indexes s the reference genome starts with 1 and the pysam.FastaFile is 0-based and the coordinates are the index-1
         ref_seq_list = list(ref_seq)
         print(ref_seq)
         print(len(ref_seq))
