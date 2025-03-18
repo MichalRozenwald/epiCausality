@@ -244,6 +244,27 @@ samtools view -c chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_202
 
 samtools index chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam
 
+ls -lah  /home/michalula/data/cas9_nanopore/data/20241226_MR_nCATs_TcellsPrES_unedit_P2R9/passed_fast5/5mCG/to_t2t_v2_0/
+
+# total 13G
+# drwxrwxr-x 3 michalula michalula 4.0K Mar 17 23:13 .
+# drwxrwxrwx 4 michalula michalula 4.0K Mar 17 04:54 ..
+# -rw-rw-r-- 1 michalula michalula 5.2G Mar 17 05:26 align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam
+# -rw-rw-r-- 1 michalula michalula  24M Mar 17 23:13 chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam
+# -rw-rw-r-- 1 michalula michalula 104K Mar 17 23:13 chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam.bai
+# -rw-r--r-- 1 michalula michalula 482M Mar 17 10:35 chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam
+# -rw-rw-r-- 1 michalula michalula 482M Mar 17 11:43 chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam
+# -rw-rw-r-- 1 michalula michalula 482M Mar 17 11:43 chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_sup@v3mCG.bam
+# -rw-rw-r-- 1 michalula michalula 482M Mar 17 11:43 chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam
+# drwxrwxr-x 2 michalula michalula 4.0K Mar 17 23:19 haplotyped
+# -rw-rw-r-- 1 michalula michalula 2.0K Mar 17 10:31 script_t2t_v2_align.bash
+# -rw-rw-r-- 1 michalula michalula 5.1G Mar 17 05:30 sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam
+# -rw-rw-r-- 1 michalula michalula 3.0M Mar 17 05:37 sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam.bai
+# -rw-rw-r-- 1 michalula michalula 482M Mar 17 11:49 sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam
+# -rw-rw-r-- 1 michalula michalula 267K Mar 17 11:49 sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam.bai
+# -rw-rw-r-- 1 michalula michalula 214M Mar 17 05:42 summary_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.tsv
+
+
 whatshap haplotag \
     --reference /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa \
     --ignore-read-groups \
@@ -260,6 +281,133 @@ whatshap haplotag \
 # MiB Swap:   2048.0 total,    439.0 free,   1609.0 used.   6894.5 avail Mem 
 #     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                                                                  
 # 1427898 michalu+  20   0  115.8g 115.7g   7296 R 100.0  92.2   1:18.11 whatshap  
+# top - 23:20:14 up 19 days,  4:21,  1 user,  load average: 1.17, 0.93, 1.71
+# Tasks: 439 total,   2 running, 437 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  4.1 us,  0.2 sy,  0.0 ni, 95.6 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total, 111118.8 free,   9040.5 used,   8395.0 buff/cache
+# MiB Swap:   2048.0 total,    439.7 free,   1608.3 used. 118280.3 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                                                                  
+# 1427898 michalu+  20   0 9348468   7.1g  11328 R 100.0   5.7   3:42.40 whatshap    
+
+# top - 23:27:11 up 19 days,  4:28,  1 user,  load average: 1.08, 1.07, 1.49
+# Tasks: 438 total,   3 running, 435 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  4.1 us,  0.2 sy,  0.0 ni, 95.7 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,  38325.9 free,  70322.2 used,  19906.2 buff/cache
+# MiB Swap:   2048.0 total,    447.0 free,   1601.0 used.  56998.5 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1427898 michalu+  20   0   83.1g  66.9g  11328 R  99.3  53.3  10:40.30 whatshap                                                              
+#  421742 minknow   35  15 6952512   7188   5388 S   1.3   0.0   1424:55 control_main                                                          
+#  421741 minknow   35  15 2374072   6256   4404 S   1.0   0.0 481:31.90 control_main    
+
+# top - 23:29:15 up 19 days,  4:30,  1 user,  load average: 1.23, 1.13, 1.45
+# Tasks: 440 total,   2 running, 438 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  4.1 us,  1.4 sy,  0.0 ni, 94.5 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,  18904.7 free,  86385.6 used,  23264.1 buff/cache
+# MiB Swap:   2048.0 total,    452.7 free,   1595.3 used.  40935.2 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1427898 michalu+  20   0  102.5g  82.5g  11328 R 100.0  65.7  12:43.56 whatshap                                                              
+#     814 root      20   0       0      0      0 S  19.9   0.0   2165:10 nvidia-modeset/kthread_q                                              
+#  938520 gdm       20   0   24.2g  13796  12672 S   7.3   0.0 438:38.93 Xorg      
+# top - 23:30:21 up 19 days,  4:31,  1 user,  load average: 1.13, 1.12, 1.43
+# Tasks: 442 total,   2 running, 440 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  4.1 us,  0.2 sy,  0.0 ni, 95.7 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,   8637.7 free,  94830.3 used,  25086.4 buff/cache
+# MiB Swap:   2048.0 total,    452.7 free,   1595.3 used.  32490.5 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1427898 michalu+  20   0  112.8g  90.7g  11328 R  99.7  72.2  13:49.70 whatshap                                                              
+#  421741 minknow   35  15 2374072   6256   4404 S   1.0   0.0 481:33.84 control_main                                                          
+#  421742 minknow   35  15 6952512   7188   5388 S   1.0   0.0   1424:57 control_main                  
+# top - 23:32:06 up 19 days,  4:33,  1 user,  load average: 1.14, 1.12, 1.39
+# Tasks: 440 total,   3 running, 437 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  4.1 us,  0.7 sy,  0.0 ni, 95.2 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,    852.8 free, 108210.2 used,  19491.3 buff/cache
+# MiB Swap:   2048.0 total,    446.8 free,   1601.2 used.  19110.6 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1427898 michalu+  20   0  129.1g 103.8g  11328 R 100.0  82.7  15:34.92 whatshap                                                              
+#     814 root      20   0       0      0      0 R   7.0   0.0   2165:23 nvidia-modeset/kthread_q                                              
+#  938520 gdm       20   0   24.2g  13796  12672 S   4.3   0.0 438:43.88 Xorg            
+# top - 23:33:00 up 19 days,  4:33,  1 user,  load average: 1.19, 1.13, 1.38
+# Tasks: 442 total,   2 running, 440 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  4.1 us,  0.2 sy,  0.0 ni, 95.6 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,    773.8 free, 115228.3 used,  12552.2 buff/cache
+# MiB Swap:   2048.0 total,    444.1 free,   1603.9 used.  12092.5 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1427898 michalu+  20   0  137.6g 110.6g  11328 R 100.0  88.1  16:29.03 whatshap                                                              
+#  421741 minknow   35  15 2374072   6256   4404 S   1.0   0.0 481:35.52 control_main                                                          
+# 1407500 michalu+  20   0   11.3g  66820  23040 S   1.0   0.1   0:44.64 node            
+# top - 23:33:42 up 19 days,  4:34,  1 user,  load average: 1.09, 1.11, 1.36
+# Tasks: 440 total,   2 running, 438 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  4.1 us,  1.5 sy,  0.0 ni, 94.4 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,    749.8 free, 120576.1 used,   7228.5 buff/cache
+# MiB Swap:   2048.0 total,    444.1 free,   1603.9 used.   6744.7 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1427898 michalu+  20   0  144.1g 115.8g  11328 R 100.0  92.2  17:11.12 whatshap                                                              
+#     814 root      20   0       0      0      0 S  20.3   0.0   2165:30 nvidia-modeset/kthread_q                                              
+#  938520 gdm       20   0   24.2g  13796  12672 S   7.3   0.0 438:46.81 Xorg            
+# top - 23:34:15 up 19 days,  4:35,  1 user,  load average: 1.05, 1.10, 1.35
+# Tasks: 443 total,   2 running, 441 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  4.1 us,  1.2 sy,  0.0 ni, 94.7 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,    731.7 free, 124656.6 used,   3166.0 buff/cache
+# MiB Swap:   2048.0 total,    436.8 free,   1611.2 used.   2664.2 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1427898 michalu+  20   0  149.0g 119.8g  10752 R 100.0  95.4  17:44.18 whatshap                                                              
+#     814 root      20   0       0      0      0 S  16.9   0.0   2165:33 nvidia-modeset/kthread_q                                              
+#  938520 gdm       20   0   24.2g  13796  12672 S   5.6   0.0 438:47.74 Xorg            
+# top - 23:34:33 up 19 days,  4:35,  1 user,  load average: 1.11, 1.11, 1.34
+# Tasks: 439 total,   3 running, 436 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  4.1 us,  0.5 sy,  0.0 ni, 95.4 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,    828.3 free, 126927.7 used,    798.4 buff/cache
+# MiB Swap:   2048.0 total,    203.7 free,   1844.3 used.    415.4 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1427898 michalu+  20   0  152.1g 122.0g   8832 R  99.7  97.2  18:02.21 whatshap                                                              
+#     191 root      20   0       0      0      0 R   6.6   0.0  12:17.61 kswapd0                                                               
+#  421742 minknow   35  15 6952512   7188   5388 S   1.3   0.0   1425:00 control_main    
+# top - 23:34:55 up 19 days,  4:35,  1 user,  load average: 2.62, 1.44, 1.45
+# Tasks: 440 total,   5 running, 435 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  0.6 us, 20.8 sy,  0.0 ni, 65.2 id, 13.4 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,    579.8 free, 127511.1 used,    463.5 buff/cache
+# MiB Swap:   2048.0 total,      0.1 free,   2047.9 used.    861.0 avail Mem 
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1138068 root      20   0 2430752   9032      0 S 251.0   0.0   2:49.68 snapd                                                                 
+#     191 root      20   0       0      0      0 R 100.0   0.0  12:36.01 kswapd0                                                               
+# 1427898 michalu+  20   0  153.2g 122.9g    960 D  32.5  97.9  18:12.24 whatshap      
+# top - 23:37:05 up 19 days,  4:38,  1 user,  load average: 11.89, 8.91, 4.45
+# Tasks: 451 total,   2 running, 449 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  5.2 us,  0.4 sy,  0.0 ni, 94.2 id,  0.2 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total, 123708.3 free,   3303.3 used,   1542.7 buff/cache
+# MiB Swap:   2048.0 total,    476.0 free,   1572.0 used. 124017.5 avail Mem 
+
+#     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                                               
+# 1438724 michalu+  20   0   11.1g 169816  41088 S  96.3   0.1   0:14.61 node                                                                  
+# 1438713 michalu+  20   0   53.2g 901620  51840 R  33.9   0.7   0:06.36 node   
+
+
+ Reduce the Number of Samples in the VCF
+# Your VCF contains 3202 samples. By default, WhatsHap loads all samples into memory, even if you're only phasing one sample. This causes extreme memory consumption.
+# Instead of using the full 1000 Genomes VCF, extract only your sample (NA21116) and create a sample-specific VCF.
+# Step 1: Extract Only NA21116 from VCF 
+conda install -c bioconda bcftools
+bcftools view -s NA21116 -Oz -o /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
+    /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
+mv /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
+   /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
+# Verify the Extraction
+# Check that the new VCF contains only NA21116:
+bcftools query -l /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
+# Index the new VCF:
+bcftools index /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
+# Step 2: Use the Smaller VCF with WhatsHap
+# Now, run WhatsHap using the sample-specific VCF instead of the full 1000 Genomes VCF:
+whatshap haplotag \
+    --reference /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa \
+    --ignore-read-groups \
+    --sample NA21116 \
+    /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
+    chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam \
+    -o ./haplotyped/haplotagged.chr1_206560169_206614236.bam
+
+
+
 
 
 # samtools view -h 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.haplotagged.sorted.bam -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.hp1.sorted.bam -
