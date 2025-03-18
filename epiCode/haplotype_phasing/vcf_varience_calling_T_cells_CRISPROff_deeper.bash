@@ -56,28 +56,28 @@ samtools mpileup -r chr1:206560169-206614236 \
 samtools mpileup -r chr1:206560169-206614236 \
 >     -f /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa \
 >     sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TPrES_CROFF90prD6_P2R9.dna_r9.4.1_e8_sup@v3.3.5mCG.bam | head -20
-[mpileup] 1 samples in 1 input files
+# [mpileup] 1 samples in 1 input files
 
-chr1    206560169       t       19      ,,,,,,.,,,,,,,,,,,,     @>>>@>>B?A55@6??:>=
-chr1    206560170       g       19      ,,,,,,.,,,,,,,,,,,,     ?==D?>=A>B55B7>=:>?
-chr1    206560171       t       23      ,,,,,,,,.,,,,,,,,,,,,,, >8<=3=7===<1:./85:0;9>8
-chr1    206560172       g       21      ,,,,,,,,.,,,,,,,,,,,,   >7<<387=<=;1:78:/=8?=
-chr1    206560173       a       20      ,,,,,,,,.,,,,,,,,,,,    =7<<290<=<;19779<8>;
-chr1    206560174       g       19      ,,,,,,,.,,,,,,,,,,,     ?6=>29=<=;1777:<9=;
-chr1    206560175       c       18      ,,*,,,,.,,,,,,,,,,      ;=/>29=:=;1547:;52
-chr1    206560176       t       22      ,,,,,,,,.,*,,,,,,,,,,,  ;=/A.7:@:?0=4<76=@>072
-chr1    206560177       t       25      ,,,,,,,,.,,,,,,,,,,,,,,,,       <@0?.;=A;A0>5>8007/AA?872
-chr1    206560178       g       23      ,,,,,,,,.,,,,,,,,,,,,,, .>/<.9=A;@3?696204B9972
-chr1    206560179       t       22      ,,,,,,,.,,,,,,,,,,,,,,  >/;/:=A;@4=676404@<872
-chr1    206560180       t       28      ,,,,,,,,,.,,,,,,,,,,,,,,,,,,    7B.:/2?D??B7C@89>875?4?:6A<0
-chr1    206560181       g       26      ,,,,,,,,.,,,,,,,,,,,,,,,,,      6>=.6?BC>A7CC88=575>5?>9A@
-chr1    206560182       g       27      ,,,,,,,,.,,,,,,,,,,,,,,,,,,     B<@?=D0D?@5?@:9>5;677@<<D6C
-chr1    206560183       a       23      ,,,,,,,,.,,,,,,,,,,,,,, >C>=:>.>=?F?0D3@0>7;A1A
-chr1    206560184       t       21      ,,,,,,,.,,,,,,,,,,,,,   9?9<9<9659:>29/7589.8
-chr1    206560185       c       20      ,,,,,,,.,,,,,,,,,,,,    9=2.7;1848:=28/74888
-chr1    206560186       a       17      ,,,,.,,,,,,,-1t,,,,,    7=2..38:727/72778
-chr1    206560187       t       16      ,,,,,,,,,,*,,,,,        7<2.38:726/61378
-chr1    206560188       c       16      ,*,,,,,,,,,,,,,,        82=238:18/7/7037
+# chr1    206560169       t       19      ,,,,,,.,,,,,,,,,,,,     @>>>@>>B?A55@6??:>=
+# chr1    206560170       g       19      ,,,,,,.,,,,,,,,,,,,     ?==D?>=A>B55B7>=:>?
+# chr1    206560171       t       23      ,,,,,,,,.,,,,,,,,,,,,,, >8<=3=7===<1:./85:0;9>8
+# chr1    206560172       g       21      ,,,,,,,,.,,,,,,,,,,,,   >7<<387=<=;1:78:/=8?=
+# chr1    206560173       a       20      ,,,,,,,,.,,,,,,,,,,,    =7<<290<=<;19779<8>;
+# chr1    206560174       g       19      ,,,,,,,.,,,,,,,,,,,     ?6=>29=<=;1777:<9=;
+# chr1    206560175       c       18      ,,*,,,,.,,,,,,,,,,      ;=/>29=:=;1547:;52
+# chr1    206560176       t       22      ,,,,,,,,.,*,,,,,,,,,,,  ;=/A.7:@:?0=4<76=@>072
+# chr1    206560177       t       25      ,,,,,,,,.,,,,,,,,,,,,,,,,       <@0?.;=A;A0>5>8007/AA?872
+# chr1    206560178       g       23      ,,,,,,,,.,,,,,,,,,,,,,, .>/<.9=A;@3?696204B9972
+# chr1    206560179       t       22      ,,,,,,,.,,,,,,,,,,,,,,  >/;/:=A;@4=676404@<872
+# chr1    206560180       t       28      ,,,,,,,,,.,,,,,,,,,,,,,,,,,,    7B.:/2?D??B7C@89>875?4?:6A<0
+# chr1    206560181       g       26      ,,,,,,,,.,,,,,,,,,,,,,,,,,      6>=.6?BC>A7CC88=575>5?>9A@
+# chr1    206560182       g       27      ,,,,,,,,.,,,,,,,,,,,,,,,,,,     B<@?=D0D?@5?@:9>5;677@<<D6C
+# chr1    206560183       a       23      ,,,,,,,,.,,,,,,,,,,,,,, >C>=:>.>=?F?0D3@0>7;A1A
+# chr1    206560184       t       21      ,,,,,,,.,,,,,,,,,,,,,   9?9<9<9659:>29/7589.8
+# chr1    206560185       c       20      ,,,,,,,.,,,,,,,,,,,,    9=2.7;1848:=28/74888
+# chr1    206560186       a       17      ,,,,.,,,,,,,-1t,,,,,    7=2..38:727/72778
+# chr1    206560187       t       16      ,,,,,,,,,,*,,,,,        7<2.38:726/61378
+# chr1    206560188       c       16      ,*,,,,,,,,,,,,,,        82=238:18/7/7037
 
 
 
@@ -96,20 +96,22 @@ bcftools mpileup -a DP,AD -Q 0 -q 0 -C 50 -Ou -f /home/michalula/data/ref_genome
     sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TPrES_CROFF90prD6_P2R9.dna_r9.4.1_e8_sup@v3.3.5mCG.bam | \
 bcftools call -mv -A --ploidy GRCh38 --keep-alts -Oz -o fixed_variants.chr1_206560169_206614236.vcf.gz
 
-🔹 Explanation:
---ploidy GRCh38 → Uses human diploid settings from GRCh38, which should match T2T-CHM13.
---keep-alts → Retains alternative alleles.
--A → Outputs all sites, including reference sites.
+# 🔹 Explanation:
+# --ploidy GRCh38 → Uses human diploid settings from GRCh38, which should match T2T-CHM13.
+# --keep-alts → Retains alternative alleles.
+# -A → Outputs all sites, including reference sites.
 
-2️⃣ Verify That Variants Were Called
-Once complete, check if the new VCF contains variants:
+# 2️⃣ Verify That Variants Were Called
+# Once complete, check if the new VCF contains variants:
 
+bcftools index fixed_variants.chr1_206560169_206614236.vcf.gz
 bcftools view -r chr1:206560169-206614236 fixed_variants.chr1_206560169_206614236.vcf.gz | head -20
 
-If variants appear, we have successfully generated a valid VCF! 🎉
+# If variants appear, we have successfully generated a valid VCF! 🎉
+# Nopee...
 
-3️⃣ If Still Failing, Manually Set Ploidy
-If GRCh38 does not work, force bcftools to assume diploidy:
+# 3️⃣ If Still Failing, Manually Set Ploidy
+# If GRCh38 does not work, force bcftools to assume diploidy:
 bcftools call -mv -A --ploidy-file <(echo -e "chr1\t206560169\t206614236\t*\t2") --keep-alts -Oz \
     -o fixed_variants.chr1_206560169_206614236.vcf.gz
 
@@ -121,5 +123,13 @@ whatshap haplotag \
     sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TPrES_CROFF90prD6_P2R9.dna_r9.4.1_e8_sup@v3.3.5mCG.bam \
     -o ./haplotyped/haplotagged.chr1_206560169_206614236.bam
 
+3️⃣ Force bcftools to Call Variants in All Sites
+If depth and reference are correct, force variant calling even for reference-matching sites:
+
+bcftools mpileup -a DP,AD -Q 0 -q 0 -C 50 --output-tags DP,AD -Ou -f /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa \
+    -r chr1:206560169-206614236 \
+    /home/michalula/data/cas9_nanopore/data/20241226_MR_nCATs_TPrES_CROFF90prD6_P2R9/pod5_converted_basecall/5mCG/to_t2t_v2_0/chr1_206560169_206614236.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TPrES_CROFF90prD6_P2R9.dna_r9.4.1_e8_sup@v3.3.5mCG.bam  | \
+bcftools call -mv -A --ploidy GRCh38 --keep-alts --output-type z \
+    -o forced_variants_with_refs.chr1_206560169_206614236.vcf.gz
 
 # Look at a broader set: chr1:206265172-206698324
