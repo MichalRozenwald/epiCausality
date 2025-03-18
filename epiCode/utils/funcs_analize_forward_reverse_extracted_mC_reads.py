@@ -131,6 +131,15 @@ def generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start):
         for order, (idx, coord) in enumerate(zip(CG_pair_idx, CG_coordinates), start=1):
             print(f"CG_{order} at index {idx} has genomic coordinate: {region_chr}:{coord}")
 
+        # Create a DataFrame with the CG index, position in the region, chromosome, and coordinate
+        CG_info_df = pd.DataFrame({
+            'Position_in_region': CG_pair_idx,
+            'Chromosome': [region_chr] * len(CG_pair_idx),
+            'Coordinate': CG_coordinates
+        })
+        CG_info_df['CG_number'] = CG_info_df.index + 1
+        print('CG_info_df', CG_info_df)
+
         C_reads_df = padded_reads_df.iloc[:, CG_pair_idx]
         G_reads_df = padded_reads_df.iloc[:, [i - 1 for i in CG_pair_idx]]
 
@@ -151,7 +160,7 @@ def generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start):
             np.concatenate([np.array(C_fwd_df), np.array(G_revs_df)], axis=0),
             columns=[f"CG_{i+1}" for i in range(np.array(C_fwd_df).shape[1])]
         )
-        return CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, CG_coordinates, fwd_reads_bools, rvs_reads_bools
+        return CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, CG_coordinates, CG_info_df, fwd_reads_bools, rvs_reads_bools
 
     except Exception as e:
         print(f"Error generating CGs_all: {e}")
@@ -536,7 +545,7 @@ def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, save
         padded_reads_df = generate_dataframe(padded_reads, ref_seq_list)
 
         # Generate CGs_all and related DataFrames
-        CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, CG_coordinates, fwd_reads_bools, rvs_reads_bools = generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start)
+        CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, CG_coordinates, CG_info_df, fwd_reads_bools, rvs_reads_bools = generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start)
 
         # Visualize CGs_all
         visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, ref_seq_list, fwd_reads_bools, rvs_reads_bools, experiment_name)
@@ -550,7 +559,7 @@ def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, save
         # Save CGs_all
         save_cgs_all(CGs_all, save_folder_path, save_cpg_name_np) 
 
-        return CGs_all, C_fwd_df, G_revs_df, padded_reads_df, CG_pair_idx, CG_coordinates
+        return CGs_all, C_fwd_df, G_revs_df, padded_reads_df, CG_pair_idx, CG_coordinates, CG_info_df
 
     except Exception as e:
         print(f"Error in process pipeline: {e}")
