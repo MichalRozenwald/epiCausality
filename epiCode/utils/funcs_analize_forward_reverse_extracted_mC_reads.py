@@ -132,7 +132,7 @@ def generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start):
             print(f"CG_{order} at index {idx} has genomic coordinate: {region_chr}:{coord}")
 
         C_reads_df = padded_reads_df.iloc[:, CG_pair_idx]
-        G_reads_df = padded_reads_df.iloc[:, [i + 1 for i in CG_pair_idx]]
+        G_reads_df = padded_reads_df.iloc[:, [i - 1 for i in CG_pair_idx]]
 
         fwd_reads_bools = C_reads_df.sum(axis=1) != 0
         rvs_reads_bools = G_reads_df.sum(axis=1) != 0
