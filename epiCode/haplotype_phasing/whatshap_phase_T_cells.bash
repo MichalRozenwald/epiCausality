@@ -414,15 +414,15 @@ whatshap haplotag \
 
 
 
-top - 01:31:24 up 19 days,  6:32,  1 user,  load average: 0.46, 0.59, 0.88
-Tasks: 438 total,   3 running, 435 sleeping,   0 stopped,   0 zombie
-%Cpu(s):  3.9 us,  0.4 sy,  0.0 ni, 95.6 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
-MiB Mem : 128554.4 total,    858.3 free,   7899.9 used, 119796.1 buff/cache
-MiB Swap:   2048.0 total,   1036.8 free,   1011.2 used. 119420.8 avail Mem 
+# top - 01:31:24 up 19 days,  6:32,  1 user,  load average: 0.46, 0.59, 0.88
+# Tasks: 438 total,   3 running, 435 sleeping,   0 stopped,   0 zombie
+# %Cpu(s):  3.9 us,  0.4 sy,  0.0 ni, 95.6 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+# MiB Mem : 128554.4 total,    858.3 free,   7899.9 used, 119796.1 buff/cache
+# MiB Swap:   2048.0 total,   1036.8 free,   1011.2 used. 119420.8 avail Mem 
 
-Found 1 sample(s) in input VCF
-Keeping 1 sample(s) for haplo-tagging
-Found 1 sample(s) in BAM file
+# Found 1 sample(s) in input VCF
+# Keeping 1 sample(s) for haplo-tagging
+# Found 1 sample(s) in BAM file
 
 Number of supplementary alignments: 0
 Number of non-singleton groups: 0
@@ -453,8 +453,9 @@ mv ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_
 
 # samtools view -h 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.haplotagged.sorted.bam -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.hp1.sorted.bam -
 samtools view -h ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o  ./haplotyped/Haplotype_1.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam 
-
+samtools index  ./haplotyped/Haplotype_1.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam 
 
 # samtools view -h 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.haplotagged.sorted.bam -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.hp2.sorted.bam -
-samtools view -h ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o  ./haplotyped/Haplotype_2.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.Haplotype_2.bam 
+samtools view -h ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o  ./haplotyped/Haplotype_2.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam 
+samtools index  ./haplotyped/Haplotype_2.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam 
 
