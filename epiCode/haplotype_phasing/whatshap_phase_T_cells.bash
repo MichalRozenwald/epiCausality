@@ -459,3 +459,22 @@ samtools index  ./haplotyped/Haplotype_1.chr1.sort_align_t2t_v2_0_trim_20241226_
 samtools view -h ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o  ./haplotyped/Haplotype_2.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam 
 samtools index  ./haplotyped/Haplotype_2.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam 
 
+# Create a VCF File for our BAM::
+bcftools mpileup -Ou -f /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa  \
+ chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam \
+ | bcftools call -mv -Oz -o  \
+ vcf.chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.vcf.gz
+
+# Use own generated VCF File:
+
+bcftools index  vcf.chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.vcf.gz
+
+bcftools view vcf.chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.vcf.gz \
+    -r chr1:206560169-206614236
+
+#Phase using own VCF:
+whatshap haplotag \
+    --reference /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa \
+    vcf.chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.vcf.gz \
+    sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam \
+    -o ./haplotyped/haplotagged.own_chr1_206560169_206614236.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam
