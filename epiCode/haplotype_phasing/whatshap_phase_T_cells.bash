@@ -387,10 +387,15 @@ whatshap haplotag \
 # Instead of using the full 1000 Genomes VCF, extract only your sample (NA21116) and create a sample-specific VCF.
 # Step 1: Extract Only NA21116 from VCF 
 conda install -c bioconda bcftools
+
 bcftools view -s NA21116 -Oz -o /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
     /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
-mv /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
-   /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
+# # THIS TAKES MORE THAN 106 mins
+# cp /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
+#    /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1_sample.NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
+
+# mv /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
+#    /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
 # Verify the Extraction
 # Check that the new VCF contains only NA21116:
 bcftools query -l /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz
@@ -409,11 +414,47 @@ whatshap haplotag \
 
 
 
+top - 01:31:24 up 19 days,  6:32,  1 user,  load average: 0.46, 0.59, 0.88
+Tasks: 438 total,   3 running, 435 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  3.9 us,  0.4 sy,  0.0 ni, 95.6 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem : 128554.4 total,    858.3 free,   7899.9 used, 119796.1 buff/cache
+MiB Swap:   2048.0 total,   1036.8 free,   1011.2 used. 119420.8 avail Mem 
+
+Found 1 sample(s) in input VCF
+Keeping 1 sample(s) for haplo-tagging
+Found 1 sample(s) in BAM file
+
+Number of supplementary alignments: 0
+Number of non-singleton groups: 0
+Skipped 0 groups
+Found 0 reads covering 0 variants
+
+== SUMMARY ==
+Total alignments processed:                      3876
+Alignments that could be tagged:                    0
+Alignments spanning multiple phase sets:            0
+Finished in 71.3 s 
+
+>> EMPTY files... ? :(
+ls -lah ./haplotyped/haplotagged.chr1_206560169_206614236.bam
+)
+
+#Phase all chr 1:
+whatshap haplotag \
+    --reference /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa \
+    --ignore-read-groups \
+    --sample NA21116 \
+    /home/michalula/data/ref_genomes/t2t_v2_0/haplotype_vcf/1000Genomes/1sample_NA21116.1KGP.CHM13v2.0.chr1.recalibrated.snp_indel.pass.vcf.gz \
+    sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam \
+    -o ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam
+
+mv ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCGbam ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam
+
 
 # samtools view -h 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.haplotagged.sorted.bam -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.hp1.sorted.bam -
-samtools view -h ./haplotyped/haplotagged.chr1_206560169_206614236.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o  ./haplotyped/sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.Haplotype_1.bam 
+samtools view -h ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam -@ 32 | grep -E '^@|HP:i:1' | samtools view -@ 32 -b -o  ./haplotyped/Haplotype_1.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam 
 
 
 # samtools view -h 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.haplotagged.sorted.bam -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o 20250114_H3K27me3_access_realtime_pass.trim.align.mapq60.hp2.sorted.bam -
-samtools view -h ./haplotyped/haplotagged.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.bam -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o  ./haplotyped/sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.Haplotype_2.bam 
+samtools view -h ./haplotyped/haplotagged.chr1.sort_chr1_sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed_dna_r9_e8_supv3mCG.bam -@ 32 | grep -E '^@|HP:i:2' | samtools view -@ 32 -b -o  ./haplotyped/Haplotype_2.chr1.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TcellsPrES_unedit_P2R9_passed.dna_r9.4.1_e8_sup@v3.3.5mCG.Haplotype_2.bam 
 
