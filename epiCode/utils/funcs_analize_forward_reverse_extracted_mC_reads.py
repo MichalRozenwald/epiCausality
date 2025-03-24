@@ -328,21 +328,16 @@ def plot_mC_sums_bar(mC_sums, ref_seq_list, title="mC Sums Bar Plot", yaxis_titl
         ),
         yaxis_title="mC Sums"
     )
-
     # ✅ Rotate x-axis labels and set font size
     fig.update_xaxes(tickangle=0, tickfont=dict(size=5))  # Adjust size as needed
-
     if fig is None:
         raise ValueError("❌ Plotly failed to create a figure. Check input data!")
     # else:
     #     print("✅ Figure created successfully:", type(fig))
-
-
     if fig is None:
         raise ValueError("❌  Post fig.update_layout Plotly failed to create a figure. Check input data!")
     else:
         print("✅ Figure created successfully  Post fig.update_layout() :", type(fig))
-
     # fig.show()  # Ensure this is executed to render the plot
     # pio.show(fig)
 
@@ -359,8 +354,82 @@ def plot_mC_sums_bar(mC_sums, ref_seq_list, title="mC Sums Bar Plot", yaxis_titl
     return fig
 
 
+def plot_mCG_bars(CGs_all, CG_pair_idx, ref_seq_list, experiment_name):
+    """
+    Creates an interactive bar plot of mCG_sums using Plotly.
 
-def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, ref_seq_list, fwd_reads_bools, rvs_reads_bools, experiment_name):
+    Parameters:
+    - mCG_sums: List or array of mCG sums values.
+    - ref_seq_list: List of reference sequence labels (same length as mCG_sums).
+
+    Returns:
+    - A Plotly figure.
+    """
+
+    # Compute sums and fractions
+    CGs_all_sums = np.nansum(CGs_all.values, axis=0)
+    CGs_all_on_fwd_C_sums = np.zeros(len(ref_seq_list))
+    CGs_all_on_fwd_C_sums[CG_pair_idx] = CGs_all_sums
+    mC_fracs = CGs_all_sums / len(CGs_all)
+    print("CGs_all_sums  =", CGs_all_sums)
+    print("CGs_all_sums / len(CGs_all) =", CGs_all_sums / len(CGs_all))
+
+    print("len(CGs_all) =", len(CGs_all))
+    print("CGs_all.shape =", CGs_all.shape)
+    print("len(CGs_all_on_fwd_C_sums) =", len(CGs_all_on_fwd_C_sums))
+    print("CGs_all_on_fwd_C_sums.shape =", CGs_all_on_fwd_C_sums.shape)
+    print("CGs_all_on_fwd_C_sums =", CGs_all_on_fwd_C_sums)
+    print("CGs_all_on_fwd_C_sums / len(CGs_all) =", CGs_all_on_fwd_C_sums / len(CGs_all))
+
+    # Scale font size: decreases as seq_length increases, but within reasonable bounds
+    font_size = max(2, min(8, 500 / len(ref_seq_list)))  # Now it stays between 2 and 8
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(np.arange(len(CGs_all_sums)), CGs_all_sums, snap=False)
+    plt.title(f"{experiment_name}\nSum of mCs of CpG units (fwd + rvs)")
+    plt.show()
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(np.arange(len(mC_fracs)), mC_fracs, snap=False)
+    if len(ref_seq_list) < 160:      
+        plt.xticks(ticks=np.arange(CGs_all.shape[1]), labels=CGs_all.columns) #, size=font_size) # 'small') #, rotation=90)
+    plt.title(f"{experiment_name}\nFractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)")
+    plt.show()
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(np.arange(len(CGs_all_on_fwd_C_sums)), CGs_all_on_fwd_C_sums, snap=False) # , width=0.0001
+    if len(ref_seq_list) < 160:       
+        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
+    plt.title(f"{experiment_name}\n Total sum of mCs (fwd + rvs) bap plot with reference seq")
+    plt.show()
+
+    mC_fracs = CGs_all_on_fwd_C_sums / len(CGs_all)
+    plt.figure(figsize=(10, 5))
+    plt.bar(np.arange(len(mC_fracs)), mC_fracs, snap=False) # , width=0.0001
+    if len(ref_seq_list) < 160:               
+        plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
+    plt.title(f"{experiment_name}\n Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}")
+    plt.show()
+
+    if len(ref_seq_list) < 160:  
+        # Visualize mC sums as bars from plotly
+        plot_mC_sums_bar(CGs_all_sums, CGs_all.columns, title=f"{experiment_name}\nSum of mCs of CpG units (fwd + rvs)", yaxis_title="mC Sums (fwd + rvs)")
+        # Visualize mC sums as bars from plotly
+        plot_mC_sums_bar(CGs_all_sums / len(CGs_all), CGs_all.columns,
+                    title=f"{experiment_name}<br> Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)",
+                    yaxis_title="mC Fractions (fwd + rvs)")
+        
+        # Visualize mC sums as bars from plotly
+        plot_mC_sums_bar(CGs_all_on_fwd_C_sums, ref_seq_list, 
+                    title=f"{experiment_name}<br> Total sum of mCs (fwd + rvs) bap plot with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Sums")
+        # # Visualize mC sums as bars from plotly
+        plot_mC_sums_bar(CGs_all_on_fwd_C_sums / len(CGs_all), ref_seq_list, 
+                    title=f"{experiment_name}<br> Fractions of mC [mC_sums / num_reads] with reference seq, num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
+
+
+
+
+def visualize_CGs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, ref_seq_list, fwd_reads_bools, rvs_reads_bools, experiment_name):
     """
     Visualize the CGs_all DataFrame and related plots.
 
@@ -374,22 +443,18 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         rvs_reads_bools (np.ndarray): Boolean array of reverse reads.
         padded_reads_df (pd.DataFrame): DataFrame of padded reads.
     """
+
+    # Scale font size: decreases as seq_length increases, but within reasonable bounds
+    font_size = max(2, min(8, 500 / len(ref_seq_list)))  # Now it stays between 2 and 8
     try:
-        # Basic statistics
+        read_sums = np.nansum(padded_reads_df.values, axis=1)
+        mC_sums = np.nansum(padded_reads_df.values, axis=0)
+        # Print basic statistics
         print("DataFrame shape:", padded_reads_df.shape)
         print(padded_reads_df.describe())
-
-        read_sums = np.nansum(padded_reads_df.values, axis=1)
         print("Read sums:", read_sums)
         print("Zero reads:", sum(read_sums == 0), ", Non-zero reads:", sum(read_sums != 0))
-
-        mC_sums = np.nansum(padded_reads_df.values, axis=0)
-        print("mC sums:", mC_sums)
-
-        # Scale font size: decreases as seq_length increases, but within reasonable bounds
-        font_size = max(2, min(8, 500 / len(ref_seq_list)))  # Now it stays between 2 and 8
-        
-        print("(mC_sums  =", mC_sums)
+        print("mC sums = ", mC_sums)
 
         plt.figure(figsize=(10, 5))
         plt.bar(np.arange(len(mC_sums)), mC_sums, snap=False)
@@ -408,72 +473,15 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         plt.title(f"{experiment_name}\n mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}")
         plt.show()
 
-
-
-        # Compute sums and fractions
-        CGs_all_sums = np.nansum(CGs_all.values, axis=0)
-        CGs_all_on_fwd_C_sums = np.zeros(len(ref_seq_list))
-        CGs_all_on_fwd_C_sums[CG_pair_idx] = CGs_all_sums
-
-        print("CGs_all_sums  =", CGs_all_sums)
-
-        plt.figure(figsize=(10, 5))
-        plt.bar(np.arange(len(CGs_all_sums)), CGs_all_sums, snap=False)
-        plt.title(f"{experiment_name}\nSum of mCs of CpG units (fwd + rvs)")
-        plt.show()
-
-
-        print("CGs_all_sums / len(CGs_all) =", CGs_all_sums / len(CGs_all))
-
-        mC_fracs = CGs_all_sums / len(CGs_all)
-        plt.figure(figsize=(10, 5))
-        plt.bar(np.arange(len(mC_fracs)), mC_fracs, snap=False)
-        if len(ref_seq_list) < 160:      
-            plt.xticks(ticks=np.arange(CGs_all.shape[1]), labels=CGs_all.columns) #, size=font_size) # 'small') #, rotation=90)
-        plt.title(f"{experiment_name}\nFractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)")
-        plt.show()
-
-
-        print("CGs_all_on_fwd_C_sums =", CGs_all_on_fwd_C_sums)
-
-        plt.figure(figsize=(10, 5))
-        plt.bar(np.arange(len(CGs_all_on_fwd_C_sums)), CGs_all_on_fwd_C_sums, snap=False) # , width=0.0001
-        if len(ref_seq_list) < 160:       
-            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
-        plt.title(f"{experiment_name}\n Total sum of mCs (fwd + rvs) bap plot with reference seq")
-        plt.show()
-
-
-        print("len(CGs_all) =", len(CGs_all))
-        print("CGs_all_on_fwd_C_sums / len(CGs_all) =", CGs_all_on_fwd_C_sums / len(CGs_all))
-
-        mC_fracs = CGs_all_on_fwd_C_sums / len(CGs_all)
-        plt.figure(figsize=(10, 5))
-        plt.bar(np.arange(len(mC_fracs)), mC_fracs, snap=False) # , width=0.0001
-        if len(ref_seq_list) < 160:               
-            plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
-        plt.title(f"{experiment_name}\n Fractions of mC [mC_sums / num_reads]  with reference seq,  num_reads= {len(CGs_all)}")
-        plt.show()
-
-
-        if len(ref_seq_list) < 160:  
-            # Visualize mC sums as bar plotly
-            plot_mC_sums_bar(mC_sums, ref_seq_list, title=f"{experiment_name}<br> mC Sums Bar Plot (Plotly)", yaxis_title="mC Sums")
-            # Visualize mC sums as bar plotly
-            plot_mC_sums_bar(mC_sums/ len(CGs_all), ref_seq_list,
-                        title=f"{experiment_name}<br> mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
-            # Visualize mC sums as bars from plotly
-            plot_mC_sums_bar(CGs_all_sums, CGs_all.columns, title=f"{experiment_name}\nSum of mCs of CpG units (fwd + rvs)", yaxis_title="mC Sums (fwd + rvs)")
-            # Visualize mC sums as bars from plotly
-            plot_mC_sums_bar(CGs_all_sums / len(CGs_all), CGs_all.columns,
-                        title=f"{experiment_name}<br> Fractions of mC [mC_sums / num_reads], num_reads= {len(CGs_all)}  of CpG units  (fwd + rvs)",
-                        yaxis_title="mC Fractions (fwd + rvs)")
-            # Visualize mC sums as bars from plotly
-            plot_mC_sums_bar(CGs_all_on_fwd_C_sums, ref_seq_list, 
-                        title=f"{experiment_name}<br> Total sum of mCs (fwd + rvs) bap plot with reference seq,  num_reads= {len(CGs_all)}", yaxis_title="mC Sums")
-            # # Visualize mC sums as bars from plotly
-            plot_mC_sums_bar(CGs_all_on_fwd_C_sums / len(CGs_all), ref_seq_list, 
-                        title=f"{experiment_name}<br> Fractions of mC [mC_sums / num_reads] with reference seq, num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
+        if len(ref_seq_list) < 160: 
+                # Visualize mC sums as bar plotly
+                plot_mC_sums_bar(mC_sums, ref_seq_list, title=f"{experiment_name}<br> mC Sums Bar Plot (Plotly)", yaxis_title="mC Sums")
+                # Visualize mC sums as bar plotly
+                plot_mC_sums_bar(mC_sums/ len(CGs_all), ref_seq_list,
+                            title=f"{experiment_name}<br> mC Fractions Scatter Plot  [mC_sums / num_reads], num_reads= {len(CGs_all)}", yaxis_title="mC Fractions")
+                
+        # Visualize mC sums as bars
+        plot_mCG_bars(CGs_all, CG_pair_idx, ref_seq_list, experiment_name)
 
 
         # Cluster maps for filtered DataFrames
@@ -499,7 +507,7 @@ def visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         print(f"Error visualizing CGs_all: {e}")
         raise
 
-def save_cgs_all(CGs_all, save_folder_path, save_cpg_name_np):
+def save_CGs_all(CGs_all, save_folder_path, save_cpg_name_np):
     """
     Save the CGs_all DataFrame to a file.
 
@@ -515,7 +523,23 @@ def save_cgs_all(CGs_all, save_folder_path, save_cpg_name_np):
         raise
 
 
-def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, save_padded_reads_name_np, ref_genome_file, region_chr, region_start, region_end):
+def save_CGs_coords_info(CG_info_df, save_folder_path, save_cpg_info_name_df):
+    """
+    Save the CGs_all DataFrame to a file.
+
+    Parameters:
+        CGs_all (pd.DataFrame): CGs_all DataFrame to save.
+        save_folder_path (str): Path to save processed data.
+    """
+    try: 
+        CG_info_df.to_csv(Path(save_folder_path, save_cpg_info_name_df))
+        print(f"CGs_all saved as {save_cpg_info_name_df} in {save_folder_path}")
+    except Exception as e:
+        print(f"Error saving CGs_all: {e}")
+        raise
+
+
+def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, save_padded_reads_name_np, ref_genome_file, region_chr, region_start, region_end, save_cpg_info_name="CG_info_df"):
     """
     Process the pipeline with the given constants.
 
@@ -548,7 +572,7 @@ def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, save
         CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, CG_coordinates, CG_info_df, fwd_reads_bools, rvs_reads_bools = generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start)
 
         # Visualize CGs_all
-        visualize_cgs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, ref_seq_list, fwd_reads_bools, rvs_reads_bools, experiment_name)
+        visualize_CGs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, ref_seq_list, fwd_reads_bools, rvs_reads_bools, experiment_name)
 
         # File name generation
         fwd_count = sum(fwd_reads_bools)
@@ -557,7 +581,9 @@ def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, save
         save_cpg_name_np = f"CG_{CGs_all.shape[1]}_units_combined_{experiment_name}_numFWD{fwd_count}_numRVS{rvs_count}_{save_padded_reads_name_np}"#_{date_today}.npy"
 
         # Save CGs_all
-        save_cgs_all(CGs_all, save_folder_path, save_cpg_name_np) 
+        save_CGs_all(CGs_all, save_folder_path, save_cpg_name_np) 
+        save_cpg_info_name_df= save_cpg_info_name + f"_{experiment_name}_numFWD{fwd_count}_numRVS{rvs_count}_{date_today}.csv"
+        save_CGs_coords_info(CG_info_df, save_folder_path, save_cpg_info_name_df)
 
         return CGs_all, C_fwd_df, G_revs_df, padded_reads_df, CG_pair_idx, CG_coordinates, CG_info_df
 
@@ -579,7 +605,7 @@ def main():
 
         date_today = datetime.today().strftime('%Y-%m-%d')
 
-        ref_genome_v1_1_file = Path('/home/michalula/data/ref_genomes/to_t2t_v1_1/chm13.draft_v1.1.fasta')
+        ref_genome_path = Path('/home/michalula/data/ref_genomes/to_t2t_v1_1/chm13.draft_v1.1.fasta')
         reg_genome_version = "t2t_v1_1"
         # t2t_v1_1_cd55_30bps = 'chr1:206586162-206586192'
         region_chr = 'chr1'
@@ -599,18 +625,18 @@ def main():
         output_dir = create_output_directory("./dimelo_v2_output")
 
         motifs=['CG,0']
-        ref_seq_list = get_reference_sequence(ref_genome_v1_1_file, region_chr, region_start, region_end)
+        ref_seq_list = get_reference_sequence(ref_genome_path, region_chr, region_start, region_end)
 
 
         # Process pipeline
-        CGs_all, C_fwd_df, G_revs_df, padded_reads_df, CG_pair_idx = analize_forward_reverse_CGs_pipeline(
+        CGs_all, C_fwd_df, G_revs_df, padded_reads_df, CG_pair_idx, CG_coordinates, CG_info_df = analize_forward_reverse_CGs_pipeline(
             experiment_name=experiment_name, save_folder_path=output_dir, 
             save_padded_reads_name_np=save_padded_reads_name_np, 
-            ref_genome_file=ref_genome_v1_1_file, region_chr=region_chr, region_start=region_start, region_end=region_end
+            ref_genome_file=ref_genome_path, region_chr=region_chr, region_start=region_start, region_end=region_end
         )
 
         print("Pipeline executed successfully (analize_forward_reverse_CGs_pipeline function)")
-        return CGs_all, C_fwd_df, G_revs_df, padded_reads_df
+        return CGs_all, C_fwd_df, G_revs_df, padded_reads_df, CG_pair_idx, CG_coordinates, CG_info_df
 
     except Exception as e:
         print(f"Error in main pipeline (analize_forward_reverse_CGs_pipeline function): {e}") 
