@@ -7,7 +7,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime
-from dimelo import parse_bam, plot_reads, load_processed
+from dimelo import parse_bam, plot_reads, load_processed, plot_read_browser
 import h5py
 
 
@@ -61,14 +61,27 @@ def extract_from_bam(bam_path, ref_genome_file, output_dir, window_size=None, th
             window_size=window_size,
         )
 
-        plot_reads.plot_reads(
-            extract_file,
-            regions,
-            motifs=motifs,
-            window_size=window_size,
-            sort_by=['shuffle', 'strand'],
-            s=1
-        )
+        if threshold_mC: 
+            plot_reads.plot_reads(
+                extract_file,
+                regions,
+                motifs=motifs,
+                window_size=window_size,
+                sort_by=['shuffle', 'strand'],
+                s=1
+            )
+        else:
+            plot_read_browser.plot_read_browser(
+                mod_file_name: str | Path,
+                region: str,
+                motifs: list[str],
+                thresh: int | float | None = None,
+                single_strand: bool = False,
+                sort_by: str | list[str] = "shuffle",
+                hover: bool = True,
+                )
+
+
 
         plt.xlabel(f'bp relative to {regions}')
         plt.show()
