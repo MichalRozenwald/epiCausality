@@ -317,7 +317,7 @@ def save_padded_reads(padded_reads, output_dir, file_name):
 # =======================
 # For unthresholded data plotting:
 
-def plot_histogram(data, num_bins, title):
+def plot_histogram(data, title, num_bins=16):
     # Compute the histogram
     hist, bin_edges = np.histogram(data, bins=num_bins)
 
@@ -349,7 +349,7 @@ def plot_histogram(data, num_bins, title):
 # # Show the plot
 # fig_hist.show()
 
-def plot_mov_values_percentages(filtered_mod_vector_no0, title, num_bins=50):
+def plot_mov_values_percentages(filtered_mod_vector_no0, title, num_bins=16):
     # Compute the histogram
     hist, bin_edges = np.histogram(filtered_mod_vector_no0, bins=num_bins)
 
@@ -404,7 +404,7 @@ def mod_vectors_noThreshold_analyze(
     extract_file, # bam_path,
     region_str,
     motifs,
-    num_bins=50,
+    num_bins=16,
     # ref_genome_path,
     # output_dir,
     # threshold_mC=None,
@@ -449,7 +449,8 @@ def mod_vectors_noThreshold_analyze(
     fig_hist.show()
 
     plot_mov_values_percentages(filtered_mod_vector_no0, 
-                                title=f"Percentage Distribution of Non-Zero mod_vector Values<br>Experiment: {experiment_name}<br>Region length: {region_length} [{region_str}]")
+                                title=f"Percentage Distribution of Non-Zero mod_vector Values<br>Experiment: {experiment_name}<br>Region length: {region_length} [{region_str}]",
+                                num_bins=num_bins)
 
     return sorted_read_tuples, readwise_datasets, regions_dict, aggregated_mod_vector, filtered_mod_vector_no0
 
