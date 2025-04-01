@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+
 from datetime import datetime
 from dimelo import parse_bam, plot_reads, load_processed, plot_read_browser
 import h5py
@@ -132,9 +134,6 @@ def process_extracted_reads_no_fully_unmethylated(extract_file, regions, motifs,
         print("Error processing extracted reads:", e)
         return None, None
 
-import pandas as pd
-import numpy as np
-import h5py
 
 def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
     """
@@ -313,6 +312,153 @@ def save_padded_reads(padded_reads, output_dir, file_name):
         print(f"Padded reads saved to {file_name}")
     except Exception as e:
         print("Error saving padded reads:", e)
+
+
+# =======================
+# For unthresholded data plotting:
+
+def plot_histogram(data, num_bins, title):
+    # Compute the histogram
+    hist, bin_edges = np.histogram(data, bins=num_bins)
+
+    # Create the bar plot
+    fig = go.Figure(data=[
+        go.Bar(
+            x=bin_edges[:-1],  # Start of each bin
+            y=hist,            # Frequency in each bin
+            width=np.diff(bin_edges),  # Width of each bin
+            marker=dict(color='blue', opacity=0.7)
+        )
+    ])
+
+    # Add labels and title
+    fig.update_layout(
+        title=title,
+        xaxis_title="mod_vector values",
+        yaxis_title="Frequency",
+        bargap=0.1
+    )
+
+    return fig
+    
+
+# Define the number of bins
+# num_bins = 50
+# title=f"Distribution of Non-Zero mod_vector Values<br>Experiment: {experiment_name}<br>Region length: {region_length} [{region_str}]"
+# fig_hist = plot_histogram(data=filtered_mod_vector_no0, num_bins=num_bins, title=title)
+# # Show the plot
+# fig_hist.show()
+
+def plot_mov_values_percentages(filtered_mod_vector_no0, title, num_bins=50):
+    # Compute the histogram
+    hist, bin_edges = np.histogram(filtered_mod_vector_no0, bins=num_bins)
+
+    # Normalize the histogram to percentages
+    percentages = (hist / len(filtered_mod_vector_no0)) * 100
+
+    # Create the bar plot
+    fig = go.Figure(data=[
+        go.Bar(
+            x=bin_edges[:-1],  # Start of each bin
+            y=percentages,     # Percentage in each bin
+            width=np.diff(bin_edges),  # Width of each bin
+            marker=dict(color='blue', opacity=0.7)
+        )
+    ])
+
+    # Add labels and title
+    fig.update_layout(
+        title=title,
+        xaxis_title="mod_vector values",
+        yaxis_title="Percentage",
+        bargap=0.1
+    )
+
+    # Show the plot
+    fig.show()
+
+    # Print the percentage values in each bin
+    for i in range(len(percentages)):
+        print(f"Bin {i + 1}: Range [{bin_edges[i]:.4f}, {bin_edges[i + 1]:.4f}) - Percentage: {percentages[i]:.2f}%")
+
+# plot_mov_values_percentages(filtered_mod_vector_no0)
+
+def parse_region(region_str):
+    # Split the region string into chromosome and range
+    region_chr, region_range = region_str.split(':')
+    # Split the range into start and end
+    region_start, region_end = map(int, region_range.split('-'))
+    # Calculate the region length
+    region_length = region_end - region_start
+    return region_chr, region_start, region_end, region_length
+
+# # Example usage
+# region_chr, region_start, region_end, region_length = parse_region(region_str)
+# print("region_chr:", region_chr)
+# print("region_start:", region_start)
+# print("region_end:", region_end)
+# print("region_length:", region_length)
+
+def mod_vectors_noThreshold_analyze(
+    experiment_name,
+    extract_file, # bam_path,
+    region_str,
+    motifs,
+    num_bins=50,
+    # ref_genome_path,
+    # output_dir,
+    # threshold_mC=None,
+    ):
+    # extract_file, extract_regions, fig_plot_browser = extract_from_bam(
+    #     experiment_name=experiment_name,
+    #     bam_path=bam_path,
+    #     ref_genome_file=ref_genome_path,
+    #     output_dir=output_dir,
+    #     regions=region_str,
+    #     motifs=motifs,
+    #     output_name='extracted_reads',
+    #     threshold_mC=threshold_mC,
+    # )
+    sorted_read_tuples, readwise_datasets, regions_dict = load_processed.read_vectors_from_hdf5(
+                                            extract_file,  # extract_file, #     file: str | Path,
+                                            motifs=motifs,  #     motifs: list[str],
+                                            regions=region_str,  #     regions: str | Path | list[str | Path] | None = None,
+                                            #     window_size: int | None = None,
+                                            #     single_strand: bool = False,
+                                            #     sort_by: str | list[str] = ["chromosome", "region_start", "read_start"],
+                                            #     calculate_mod_fractions: bool = True,
+                                        ) # -> tuple[list[tuple], list[str], dict | None]
+
+
+    # Aggregate the second elements (mod_vector) from all tuples
+    aggregated_mod_vector = [read[1] for read in sorted_read_tuples] # np.sum(, axis=0
+    # print('aggregated_mod_vector', aggregated_mod_vector)                      
+
+    flattened_mod_vector = np.concatenate(aggregated_mod_vector)
+    # print("flattened_mod_vector", flattened_mod_vector)
+
+    # Filter out values equal to 0
+    filtered_mod_vector_no0 = flattened_mod_vector[flattened_mod_vector != 0]
+
+    # Define the number of bins
+    # num_bins = 50
+    region_chr, region_start, region_end, region_length = parse_region(region_str)
+    title=f"Distribution of Non-Zero mod_vector Values<br>Experiment: {experiment_name}<br>Region length: {region_length} [{region_str}]"
+    fig_hist = plot_histogram(data=filtered_mod_vector_no0, num_bins=num_bins, title=title)
+    # Show the plot
+    fig_hist.show()
+
+    plot_mov_values_percentages(filtered_mod_vector_no0, 
+                                title=f"Percentage Distribution of Non-Zero mod_vector Values<br>Experiment: {experiment_name}<br>Region length: {region_length} [{region_str}]")
+
+    return sorted_read_tuples, readwise_datasets, regions_dict, aggregated_mod_vector, filtered_mod_vector_no0
+
+# sorted_read_tuples, readwise_datasets, regions_dict, aggregated_mod_vector, filtered_mod_vector_no0 = mod_vectors_analyze(
+#         experiment_name,
+#         extract_file, # bam_path,
+#         region_str,
+#         motifs
+#     )
 
 
 def main():
