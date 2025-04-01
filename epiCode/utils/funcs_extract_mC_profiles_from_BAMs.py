@@ -45,11 +45,17 @@ def create_output_directory(path):
         print("Error creating output directory:", e)
         return None
 
-def extract_from_bam(bam_path, ref_genome_file, output_dir, window_size=None, threshold_mC=0.99, 
+def extract_from_bam(experiment_name, bam_path, ref_genome_file, output_dir, window_size=None, threshold_mC=0.99, 
                     num_cores=32, regions='chr1:206586162-206586192', motifs=['CG,0'], 
-                    output_name='extract_output'):
+                    output_name='extract_output', save_fig=True):
     """Processes a BAM file using parse_bam.extract and plots the extracted reads."""
     try:
+        # Parse regions to calculate region length
+        region_chr, region_coords = regions.split(':')
+        region_start, region_end = map(int, region_coords.split('-'))
+        region_length = region_end - region_start
+        print(f"Region length: {region_length}")
+
         extract_file, extract_regions = parse_bam.extract(
             input_file=bam_path,
             output_name=output_name,
@@ -61,7 +67,26 @@ def extract_from_bam(bam_path, ref_genome_file, output_dir, window_size=None, th
             window_size=window_size,
         )
 
-        if threshold_mC: 
+        if threshold_mC == None: 
+            fig_plot_browser = plot_read_browser.plot_read_browser(
+                mod_file_name=extract_file,# mod_file_name: str | Path,
+                region=regions, #region: str,
+                motifs=motifs, #motifs: list[str],
+                thresh=threshold_mC, # thresh: int | float | None = None,
+                single_strand = False, # : bool = False,
+                sort_by=['shuffle', 'strand'], #: str | list[str] = "shuffle",
+                hover = True, #: bool = True,
+                )
+            fig_plot_browser.update_layout(  
+                title=f"{experiment_name}<br>Extracted Reads for {regions}",
+            )
+            # fig.show()
+            if save_fig:
+                output_html_path = Path(output_dir) / f"plot_browser_{region_length}bps_{experiment_name}_extract_reads_{regions}.html"
+                fig_plot_browser.write_html(str(output_html_path))
+                print(f"Plot browser html figure saved to {output_html_path}")
+            return extract_file, extract_regions, fig_plot_browser
+        else: 
             plot_reads.plot_reads(
                 extract_file,
                 regions,
@@ -70,23 +95,11 @@ def extract_from_bam(bam_path, ref_genome_file, output_dir, window_size=None, th
                 sort_by=['shuffle', 'strand'],
                 s=1
             )
-        else:
-            plot_read_browser.plot_read_browser(
-                mod_file_name: str | Path,
-                region: str,
-                motifs: list[str],
-                thresh: int | float | None = None,
-                single_strand: bool = False,
-                sort_by: str | list[str] = "shuffle",
-                hover: bool = True,
-                )
-
-
-
-        plt.xlabel(f'bp relative to {regions}')
-        plt.show()
-
+            plt.xlabel(f'bp relative to {regions}')
+            plt.title(f"{experiment_name}<bp>Extracted Reads for {regions}")
+            plt.show()
         return extract_file, extract_regions
+    
     except Exception as e:
         print("Error in BAM extraction:", e)
         return None, None
