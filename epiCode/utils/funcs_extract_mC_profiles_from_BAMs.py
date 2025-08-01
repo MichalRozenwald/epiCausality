@@ -399,6 +399,18 @@ def parse_region(region_str):
 # print("region_end:", region_end)
 # print("region_length:", region_length)
 
+
+def plot_violin_mod_vector(mod_vector, title="Violin Plot of mod_vector Values"):
+    """Plot a violin plot of the mod_vector values using seaborn."""
+    plt.figure(figsize=(8, 4))
+    sns.violinplot(y=mod_vector, inner="box", color="skyblue")
+    plt.title(title)
+    plt.ylabel("mod_vector value")
+    plt.xlabel("")
+    plt.tight_layout()
+    plt.show()
+
+
 def mod_vectors_noThreshold_analyze(
     experiment_name,
     extract_file, # bam_path,
@@ -436,6 +448,9 @@ def mod_vectors_noThreshold_analyze(
 
     flattened_mod_vector = np.concatenate(aggregated_mod_vector)
     # print("flattened_mod_vector", flattened_mod_vector)
+
+    # Violin plot of the flattened_mod_vector
+    plot_violin_mod_vector(flattened_mod_vector, title=f"Violin Plot of mod_vector Values\nExperiment: {experiment_name} [{region_str}]")
 
     # Filter out values equal to 0
     filtered_mod_vector_no0 = flattened_mod_vector[flattened_mod_vector != 0]
@@ -477,10 +492,8 @@ def main():
     # t2t_v1_1_cd55_30bps = 'chr1:206586162-206586192'
     region_chr = 'chr1'
 
-
     # Expend window size
-    expand_window_size = 16 # 50 # 50 #000
-    expand_window_size
+    expand_window_size = 16 # 50 # 50 #000 
     print("Expend window size by 2 * ", expand_window_size)
     region_start = 206586162 - expand_window_size
     region_end = 206586192 + expand_window_size + 1
@@ -497,6 +510,7 @@ def main():
 
 
     extract_file, extract_regions = extract_from_bam(
+        experiment_name=experiment_name,
         bam_path=bam_path,
         ref_genome_file=ref_genome_v1_1_file,
         output_dir=output_dir,

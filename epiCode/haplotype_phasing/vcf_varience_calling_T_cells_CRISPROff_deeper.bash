@@ -22,7 +22,7 @@ bcftools mpileup -Ou -f /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa  
 
 bcftools index  vcf.chr1_206560169_206614236.chr1_206560169_206614236.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TPrES_CROFF90prD6_P2R9.dna_r9.4.1_e8_sup@v3.3.5mCG.vcf.gz
 
-bcftools view  -r chr1:206560169-206614236 vcf.chr1_206560169_206614236.chr1_206560169_206614236.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TPrES_CROFF90prD6_P2R9.dna_r9.4.1_e8_sup@v3.3.5mCG.vcf.gz | head -20
+bcftools view -r chr1:206560169-206614236 vcf.chr1_206560169_206614236.chr1_206560169_206614236.sort_align_t2t_v2_0_trim_20241226_MR_nCATs_TPrES_CROFF90prD6_P2R9.dna_r9.4.1_e8_sup@v3.3.5mCG.vcf.gz | head -20
 
 # top - 05:42:23 up 19 days, 10:43,  1 user,  load average: 1.17, 1.02, 0.77
 # Tasks: 442 total,   2 running, 440 sleeping,   0 stopped,   0 zombie
