@@ -539,7 +539,9 @@ def save_CGs_coords_info(CG_info_df, save_folder_path, save_cpg_info_name_df):
         raise
 
 
-def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, save_padded_reads_name_np, ref_genome_file, region_chr, region_start, region_end, save_cpg_info_name="CG_info_df"):
+def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, 
+        save_padded_reads_name_np, ref_genome_file, region_chr, region_start, region_end, 
+        do_save_CGs_coords_info=False, save_cpg_info_name="CG_info_df"):
     """
     Process the pipeline with the given constants.
 
@@ -569,21 +571,24 @@ def analize_forward_reverse_CGs_pipeline(experiment_name, save_folder_path, save
         padded_reads_df = generate_dataframe(padded_reads, ref_seq_list)
 
         # Generate CGs_all and related DataFrames
-        CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, CG_coordinates, CG_info_df, fwd_reads_bools, rvs_reads_bools = generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start)
+        CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, CG_coordinates, CG_info_df, \
+            fwd_reads_bools, rvs_reads_bools = generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start)
 
         # Visualize CGs_all
-        visualize_CGs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, ref_seq_list, fwd_reads_bools, rvs_reads_bools, experiment_name)
+        visualize_CGs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx, \
+            ref_seq_list, fwd_reads_bools, rvs_reads_bools, experiment_name)
 
         # File name generation
         fwd_count = sum(fwd_reads_bools)
         rvs_count = sum(rvs_reads_bools)
         date_today = datetime.today().strftime('%Y-%m-%d')
-        save_cpg_name_np = f"CG_{CGs_all.shape[1]}_units_combined_{experiment_name}_numFWD{fwd_count}_numRVS{rvs_count}_{save_padded_reads_name_np}"#_{date_today}.npy"
+        save_cpg_name_np = f"CG_{CGs_all.shape[1]}_{save_padded_reads_name_np[:-4]}_units_combined_numFWD{fwd_count}_numRVS{rvs_count}.npy" #_{date_today}.npy"
 
         # Save CGs_all
         save_CGs_all(CGs_all, save_folder_path, save_cpg_name_np) 
         save_cpg_info_name_df= save_cpg_info_name + f"_{experiment_name}_numFWD{fwd_count}_numRVS{rvs_count}_{date_today}.csv"
-        save_CGs_coords_info(CG_info_df, save_folder_path, save_cpg_info_name_df)
+        if do_save_CGs_coords_info:
+            save_CGs_coords_info(CG_info_df, save_folder_path, save_cpg_info_name_df)
 
         return CGs_all, C_fwd_df, G_revs_df, padded_reads_df, CG_pair_idx, CG_coordinates, CG_info_df
 
