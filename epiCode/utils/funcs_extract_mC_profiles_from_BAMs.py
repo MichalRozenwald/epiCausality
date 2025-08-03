@@ -135,7 +135,7 @@ def process_extracted_reads_no_fully_unmethylated(extract_file, regions, motifs,
         return None, None
 
 
-def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
+def process_extracted_reads_add_fully_unmethylated(extract_file, regions, motifs, ref_seq_list):
     """
     Process extracted reads into a DataFrame, ensuring all reads (methylated and unmethylated) are included.
     """
@@ -194,11 +194,184 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list):
         return None, None
 
 
+def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_full_coverage_reads_only=True):
+    """
+    Process extracted reads into a DataFrame, ensuring only reads that cover the full start to end DNA coordinates are included.
+    This function filters out reads that don't span the complete region of interest.
+    
+    Parameters:
+    -----------
+    extract_file : str or Path
+        Path to the HDF5 file containing extracted read data
+    regions : str
+        Genomic region in format 'chr:start-end' (e.g., 'chr1:206586162-206586192')
+    motifs : list
+        List of motifs to search for (e.g., ['CG,0'])
+    ref_seq_list : list
+        Reference sequence as a list of nucleotides
+    keep_full_coverage_reads_only : bool, optional
+        If True, only keeps reads that cover the full start to end DNA coordinates. If False, keeps all reads.
+        Default is True.
+        
+    Returns:
+    --------
+    tuple : (DataFrame, dict)
+        - DataFrame with filtered reads containing columns: read_name, mod, pos, pos_shifted
+        - Dictionary containing region information
+        
+    Example:
+    --------
+    # Extract reads that cover the full region
+    reads_df, regions_dict = process_extracted_reads(
+        extract_file='path/to/extracted_reads.h5',
+        regions='chr1:206586162-206586192',
+        motifs=['CG,0'],
+        ref_seq_list=['A', 'T', 'G', 'C', ...],
+        keep_full_coverage_reads_only=True
+    )
+    """
+    try:
+        # Extract methylation-modified positions
+        mod_coords, read_ids, mods, regions_dict = load_processed.readwise_binary_modification_arrays(
+            file=extract_file,
+            regions=regions,
+            motifs=motifs
+        )
+
+        # Get all read names and their coordinate information
+        read_starts = None
+        read_ends = None
+        read_coords = None
+        
+        with h5py.File(extract_file, "r") as h5:
+            all_read_names = np.array(h5["read_name"], dtype=str)  # Extract all read names
+            
+            # Print the keys in the .h5 file
+            # print("Available keys in HDF5 file:", list(h5.keys()))
+            
+            # Try to get read coordinate information if available
+            read_coords_available = False
+            try:
+                # Check if read coordinates are available in the HDF5 file
+                if "read_start" in h5.keys() and "read_end" in h5.keys():
+                    read_starts = np.array(h5["read_start"])
+                    read_ends = np.array(h5["read_end"])
+                    read_coords_available = True
+                    print(f"Found read coordinates: {len(read_starts)} reads")
+                elif "read_coords" in h5.keys():
+                    read_coords = np.array(h5["read_coords"])
+                    read_coords_available = True
+                    print(f"Found read_coords: {len(read_coords)} reads")
+                else:
+                    print("Warning: Read coordinate information not found in HDF5 file.")
+            except Exception as e:
+                print(f"Warning: Could not access read coordinate information: {e}")
+
+        # Parse the region to get start and end coordinates
+        region_chr, region_coords = regions.split(':')
+        region_start, region_end = map(int, region_coords.split('-'))
+        region_length = region_end - region_start
+
+        # Convert read IDs to actual read names using the all_read_names array
+        # read_ids are indices into the all_read_names array
+        methylated_read_names = []
+        for read_id in read_ids:
+            try:
+                read_index = int(read_id)
+                if read_index < len(all_read_names):
+                    methylated_read_names.append(all_read_names[read_index])
+                else:
+                    print(f"Warning: Read ID {read_id} is out of bounds for all_read_names array")
+                    methylated_read_names.append(f"unknown_{read_id}")
+            except (ValueError, TypeError):
+                print(f"Warning: Could not convert read_id {read_id} to integer")
+                methylated_read_names.append(f"unknown_{read_id}")
+
+        # Convert read IDs to strings to avoid type mismatches
+        read_ids = np.array(read_ids, dtype=str)
+
+        # Create a DataFrame for methylated reads
+        reads_df = pd.DataFrame({
+            'read_name_str': methylated_read_names,
+            'read_name': read_ids,
+            'read_id_number': read_ids,
+            'mod': mods,
+            'pos': mod_coords
+        })
+        
+        print(f"Unique read names with methylation: {len(reads_df['read_name'].unique())}")
+
+        # Filter reads based on coverage criteria
+        if keep_full_coverage_reads_only:
+            if read_coords_available:
+                # Method 1: Use explicit read coordinates if available
+                if read_starts is not None and read_ends is not None:
+                    # Create a mapping of read names to their coordinates
+                    read_coord_map = {}
+                    for i, read_name in enumerate(all_read_names):
+                        read_coord_map[read_name] = (read_starts[i], read_ends[i])
+                    
+                    # Filter reads that cover the full region
+                    full_coverage_reads = []
+                    for read_name in all_read_names:
+                        if read_name in read_coord_map:
+                            read_start, read_end = read_coord_map[read_name]
+                            # Check if read covers the full region (read starts before or at region start and ends after or at region end)
+                            if read_start <= region_start and read_end >= region_end:
+                                full_coverage_reads.append(read_name)
+                    
+                    # Check overlap between full coverage reads and reads with methylation data
+                    reads_with_methylation = set(reads_df['read_name_str'].unique())
+                    full_coverage_set = set(full_coverage_reads)
+                    overlap = reads_with_methylation.intersection(full_coverage_set)
+                    
+                    print(f"Found {len(full_coverage_reads)} reads with full coverage")
+                    print(f"Reads with methylation data: {len(reads_with_methylation)}")
+                    print(f"Overlap between full coverage and methylation: {len(overlap)}")
+                    
+                    # Filter the reads_df to only include full coverage reads
+                    reads_df = reads_df[reads_df['read_name_str'].isin(full_coverage_reads)]
+                    print(f"After full coverage filtering: {len(reads_df)} reads with methylation data")
+
+                elif read_coords is not None:
+                    # Method 2: Use read_coords if available (assuming it contains start/end pairs)
+                    full_coverage_reads = []
+                    for i, read_name in enumerate(all_read_names):
+                        if i < len(read_coords):
+                            read_start, read_end = read_coords[i]
+                            if read_start <= region_start and read_end >= region_end:
+                                full_coverage_reads.append(read_name)
+                    
+                    reads_df = reads_df[reads_df['read_name_str'].isin(full_coverage_reads)]
+                    print(f"Found {len(full_coverage_reads)} reads with full coverage")
+                    print(f"After full coverage filtering: {len(reads_df)} reads with methylation data")
+            else:
+                print("Warning: No coordinate information available for full coverage filtering. Keeping all reads with methylation information.")
+        
+        # # Debug: Show the mapping between read IDs and actual read names
+        # print(f"Converted {len(read_ids)} read IDs to actual read names")
+        # print(f"Sample mapping: read_id 0 -> {read_names[0] if len(read_names) > 0 else 'N/A'}")
+        # Ensure 'pos' is numeric for all rows
+        reads_df['pos'] = pd.to_numeric(reads_df['pos'], errors='coerce')
+
+        # Compute shifted positions
+        region_length = len(ref_seq_list)
+        reads_df['pos_shifted'] = reads_df['pos'].apply(
+            lambda x: int(x + (region_length // 2)) if not np.isnan(x) else -1
+        )
+
+        print(f"Final result: {len(reads_df)} reads with methylation information out of {len(all_read_names)} total reads")
+        return reads_df, regions_dict
+
+    except Exception as e:
+        print("Error processing extracted reads with full coverage filtering:", e)
+        return None, None
+
 
 def visualize_data_old(reads_df):
     """Generate visualizations for the data."""
     try:
-        reads_df['read_name'].plot(kind='hist', bins=1600, title='Read Names Distribution')
+        reads_df['read_name'].plot(kind='hist', bins=1600, title='#mC of individual Reads Distribution')
         plt.gca().spines[['top', 'right']].set_visible(False)
         plt.show()
 
@@ -227,7 +400,7 @@ def visualize_data(reads_df):
         reads_df = reads_df.dropna(subset=['pos'])  # Remove unmethylated reads for plotting
 
         # Histogram of read distribution
-        reads_df['read_name'].value_counts().plot(kind='bar', title='Read Names Distribution')
+        reads_df['read_name'].value_counts().plot(kind='bar', title='#mC of individual Reads Distribution')
         plt.gca().spines[['top', 'right']].set_visible(False)
         plt.show()
 

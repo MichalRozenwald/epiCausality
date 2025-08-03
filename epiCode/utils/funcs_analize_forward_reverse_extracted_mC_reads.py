@@ -124,12 +124,12 @@ def generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start):
     try:
         seq_str = ''.join(ref_seq_list)
         CG_pair_idx = [i for i in range(len(seq_str) - 1) if seq_str[i] == 'C' and seq_str[i + 1] == 'G']
-        print("CG Pair Indices:", CG_pair_idx)
+        # print("CG Pair Indices:", CG_pair_idx)
         # Calculate the genomic coordinates of the CGs
         CG_coordinates = [(region_start + idx) for idx in CG_pair_idx]
         # Print the genomic coordinates with CG order number
-        for order, (idx, coord) in enumerate(zip(CG_pair_idx, CG_coordinates), start=1):
-            print(f"CG_{order} at index {idx} has genomic coordinate: {region_chr}:{coord}")
+        # for order, (idx, coord) in enumerate(zip(CG_pair_idx, CG_coordinates), start=1):
+        #     print(f"CG_{order} at index {idx} has genomic coordinate: {region_chr}:{coord}")
 
         # Create a DataFrame with the CG index, position in the region, chromosome, and coordinate
         CG_info_df = pd.DataFrame({
@@ -138,7 +138,7 @@ def generate_CGs_all(padded_reads_df, ref_seq_list, region_chr, region_start):
             'Coordinate': CG_coordinates
         })
         CG_info_df['CG_number'] = CG_info_df.index + 1
-        print('CG_info_df', CG_info_df)
+        # print('CG_info_df', CG_info_df)
 
         C_reads_df = padded_reads_df.iloc[:, CG_pair_idx]
         G_reads_df = padded_reads_df.iloc[:, [i - 1 for i in CG_pair_idx]]
@@ -371,15 +371,15 @@ def plot_mCG_bars(CGs_all, CG_pair_idx, ref_seq_list, experiment_name):
     CGs_all_on_fwd_C_sums = np.zeros(len(ref_seq_list))
     CGs_all_on_fwd_C_sums[CG_pair_idx] = CGs_all_sums
     mC_fracs = CGs_all_sums / len(CGs_all)
-    print("CGs_all_sums  =", CGs_all_sums)
-    print("CGs_all_sums / len(CGs_all) =", CGs_all_sums / len(CGs_all))
+    # print("CGs_all_sums  =", CGs_all_sums)
+    # print("CGs_all_sums / len(CGs_all) =", CGs_all_sums / len(CGs_all))
 
     print("len(CGs_all) =", len(CGs_all))
     print("CGs_all.shape =", CGs_all.shape)
     print("len(CGs_all_on_fwd_C_sums) =", len(CGs_all_on_fwd_C_sums))
     print("CGs_all_on_fwd_C_sums.shape =", CGs_all_on_fwd_C_sums.shape)
-    print("CGs_all_on_fwd_C_sums =", CGs_all_on_fwd_C_sums)
-    print("CGs_all_on_fwd_C_sums / len(CGs_all) =", CGs_all_on_fwd_C_sums / len(CGs_all))
+    # print("CGs_all_on_fwd_C_sums =", CGs_all_on_fwd_C_sums)
+    # print("CGs_all_on_fwd_C_sums / len(CGs_all) =", CGs_all_on_fwd_C_sums / len(CGs_all))
 
     # Scale font size: decreases as seq_length increases, but within reasonable bounds
     font_size = max(2, min(8, 500 / len(ref_seq_list)))  # Now it stays between 2 and 8
@@ -450,8 +450,8 @@ def visualize_CGs_all(padded_reads_df, CGs_all, C_fwd_df, G_revs_df, CG_pair_idx
         read_sums = np.nansum(padded_reads_df.values, axis=1)
         mC_sums = np.nansum(padded_reads_df.values, axis=0)
         # Print basic statistics
-        print("DataFrame shape:", padded_reads_df.shape)
-        print(padded_reads_df.describe())
+        # print("DataFrame shape:", padded_reads_df.shape)
+        # print(padded_reads_df.describe())
         print("Read sums:", read_sums)
         print("Zero reads:", sum(read_sums == 0), ", Non-zero reads:", sum(read_sums != 0))
         print("mC sums = ", mC_sums)
