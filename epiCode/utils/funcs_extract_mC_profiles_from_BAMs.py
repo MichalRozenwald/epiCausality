@@ -368,7 +368,7 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
         return None, None
 
 
-def remove_low_methylated_reads(reads_df, regions_dict, threshold_percent=10):
+def remove_low_methylated_reads(reads_df, threshold_percent=50):
     """
     Remove reads that have less than a specified percentage of the maximum number 
     of methylated CGs per read in the dataset.
@@ -380,7 +380,7 @@ def remove_low_methylated_reads(reads_df, regions_dict, threshold_percent=10):
     regions_dict : dict
         Dictionary containing region information
     threshold_percent : float, optional
-        Percentage threshold relative to the maximum number of methylated CGs per read.
+        Percentage threshold relative to the mean number of methylated CGs per read.
         Reads with fewer methylated CGs than this percentage will be removed.
         Default is 10 (10% of maximum).
         
@@ -388,29 +388,36 @@ def remove_low_methylated_reads(reads_df, regions_dict, threshold_percent=10):
     --------
     tuple : (DataFrame, dict)
         - Filtered DataFrame with low methylated reads removed
-        - Original regions_dict
         
     Example:
     --------
     # Remove reads with less than 10% of max methylation
-    filtered_reads_df, regions_dict = remove_low_methylated_reads(
+    filtered_reads_df = remove_low_methylated_reads(
         reads_df=reads_df,
-        regions_dict=regions_dict,
         threshold_percent=10
     )
     """
     try:
         # Count methylated CGs per read
+        # Convert mod column to numeric to enable mathematical operations
+        reads_df['num_CG_methylated'] = pd.to_numeric(reads_df['mod'], errors='coerce').fillna(1)
+        # reads_df['num_CG_methylated'] = 1
+        
         # Group by read_name and count the number of methylation events (mod=1)
-        methylation_counts = reads_df.groupby('read_name')['mod'].sum().reset_index()
+        methylation_counts = reads_df.groupby('read_name')['num_CG_methylated'].sum().reset_index()
         methylation_counts.columns = ['read_name', 'methylation_count']
         
-        # Find the maximum number of methylated CGs across all reads
+        # # Find the maximum number of methylated CGs across all reads
         max_methylation = methylation_counts['methylation_count'].max()
+        # # Find the median number of methylated CGs across all reads
+        # max_methylation = methylation_counts['methylation_count'].median()
+        # Find the mean number of methylated CGs across all reads
+        mean_methylation = methylation_counts['methylation_count'].median()
         
         # Calculate the threshold (10% of maximum by default)
-        threshold = max_methylation * (threshold_percent / 100)
+        threshold = mean_methylation * (threshold_percent / 100)
         
+        print(f"Mean methylated CGs per read: {mean_methylation}")
         print(f"Maximum methylated CGs per read: {max_methylation}")
         print(f"Threshold ({threshold_percent}% of max): {threshold:.2f}")
         
@@ -424,11 +431,11 @@ def remove_low_methylated_reads(reads_df, regions_dict, threshold_percent=10):
         print(f"Number of reads after filtering: {len(filtered_reads_df['read_name'].unique())}")
         print(f"Removed {len(reads_df['read_name'].unique()) - len(filtered_reads_df['read_name'].unique())} reads")
         
-        return filtered_reads_df, regions_dict
+        return filtered_reads_df, methylation_counts
         
     except Exception as e:
         print("Error in remove_low_methylated_reads:", e)
-        return reads_df, regions_dict
+        return reads_df
 
 
 def visualize_data_old(reads_df):
