@@ -1,9 +1,10 @@
 import pysam
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 from pathlib import Path
 from typing import Optional, Tuple, Dict, List
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def _parse_region(region: Optional[str], bam: pysam.AlignmentFile) -> Tuple[Optional[str], Optional[int], Optional[int], Optional[int]]:
@@ -218,7 +219,7 @@ def plot_alignment_heatmap(
     # --------------------------------------------------------------
 
     if show_colorbar:
-        plt.colorbar(im)
+        plt.colorbar(im,cmap='plasma') # cmap='viridis') 
 
     plt.tight_layout()
     plt.show()
@@ -227,9 +228,9 @@ def plot_alignment_heatmap(
     if show_clustered_heatmap:
         # sns.clustermap(G_revs_df.fillna(-1), col_cluster=False)
 
-        g = sns.clustermap(np.DataFrame(matrix).fillna(-1), cmap='viridis', 
-            cbar_kws={'label': "Clustered" + title, 'orientation': 'vertical'})
+        g = sns.clustermap(pd.DataFrame(matrix).fillna(-1), col_cluster=False, cmap='plasma')  # , cbar_kws={'label': "Y labet") # , 'orientation': 'vertical'
 
+        g.ax_cbar.set_title("Clustered" + title, pad=16)
 
         # Display the plot
         plt.show()
