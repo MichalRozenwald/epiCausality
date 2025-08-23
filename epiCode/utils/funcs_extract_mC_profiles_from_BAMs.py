@@ -331,7 +331,7 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
                     
                     # Filter the reads_df to only include full coverage reads
                     reads_df = reads_df[reads_df['read_name_str'].isin(full_coverage_reads)]
-                    print(f"After full coverage filtering: {len(reads_df)} reads with methylation data")
+                    print(f"After full coverage filtering: {len(np.unique(reads_df['read_name_str']))} reads with methylation data")
 
                 elif read_coords is not None:
                     # Method 2: Use read_coords if available (assuming it contains start/end pairs)
@@ -344,7 +344,7 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
                     
                     reads_df = reads_df[reads_df['read_name_str'].isin(full_coverage_reads)]
                     print(f"Found {len(full_coverage_reads)} reads with full coverage")
-                    print(f"After full coverage filtering: {len(reads_df)} reads with methylation data")
+                    print(f"After full coverage filtering: {len(np.unique(reads_df['read_name_str']))} reads with methylation data")
             else:
                 print("Warning: No coordinate information available for full coverage filtering. Keeping all reads with methylation information.")
         
@@ -423,19 +423,170 @@ def remove_low_methylated_reads(reads_df, threshold_percent=50):
         
         # Get reads that meet the threshold
         reads_to_keep = methylation_counts[methylation_counts['methylation_count'] >= threshold]['read_name'].tolist()
+        reads_to_remove = methylation_counts[methylation_counts['methylation_count'] < threshold]['read_name'].tolist()
         
         # Filter the original DataFrame
         filtered_reads_df = reads_df[reads_df['read_name'].isin(reads_to_keep)].copy()
+        remove_reads_df = reads_df[reads_df['read_name'].isin(reads_to_remove)].copy()
         
         print(f"Original number of reads: {len(reads_df['read_name'].unique())}")
         print(f"Number of reads after filtering: {len(filtered_reads_df['read_name'].unique())}")
         print(f"Removed {len(reads_df['read_name'].unique()) - len(filtered_reads_df['read_name'].unique())} reads")
         
-        return filtered_reads_df, methylation_counts
+        return filtered_reads_df, methylation_counts, remove_reads_df
         
     except Exception as e:
         print("Error in remove_low_methylated_reads:", e)
         return reads_df
+
+import pysam
+from pathlib import Path
+
+def subset_BAM_by_read_IDs(bam_path, remove_reads_df, output_bam_path=None, index_output=True):
+    """
+    Create a BAM that contains only reads whose names are listed in remove_reads_df['read_name'].
+
+    Parameters
+    ----------
+    bam_path : str | Path
+        Path to the source BAM.
+    remove_reads_df : pandas.DataFrame
+        DataFrame with a column 'read_name' (the qname in the BAM). Duplicates are OK.
+    output_bam_path : str | Path | None
+        Where to write the subset BAM. If None, will write alongside the input as
+        '<input_basename>.subset_by_remove_reads.bam'.
+    index_output : bool
+        If True, create a .bai index for the output BAM.
+
+    Returns
+    -------
+    Path
+        Path to the written subset BAM.
+    """
+    bam_path = Path(bam_path)
+
+    if output_bam_path is None:
+        output_bam_path = bam_path.with_suffix("")  # strip .bam
+        output_bam_path = Path(str(output_bam_path) + ".subset_by_remove_reads.bam")
+    else:
+        output_bam_path = Path(output_bam_path)
+
+    # Determine which column has the read names:
+    # Prefer 'read_name' (typical). If not present, try a common alternative used upstream.
+    if 'read_name_str' in remove_reads_df.columns:
+        name_series = remove_reads_df['read_name_str']
+    elif 'read_name' in remove_reads_df.columns:
+        name_series = remove_reads_df['read_name']
+    else:
+        raise ValueError(
+            "remove_reads_df must contain a 'read_name' or 'read_name_str' column with BAM qnames."
+        )
+
+    # Build a set for fast lookups; ensure strings
+    target_names = set(map(str, name_series.dropna().unique()))
+    if len(target_names) == 0:
+        raise ValueError("remove_reads_df has no read names to subset.")
+
+    # Open input and create output with the same header
+    with pysam.AlignmentFile(bam_path, "rb") as in_bam:
+        with pysam.AlignmentFile(output_bam_path, "wb", header=in_bam.header) as out_bam:
+            # Iterate over all records (including unmapped) safely
+            for aln in in_bam.fetch(until_eof=True):
+                # query_name is the read's QNAME in BAM
+                if aln.query_name in target_names:
+                    out_bam.write(aln)
+
+    # Optionally index the output BAM
+    if index_output:
+        # Remove existing index if present to avoid pysam errors
+        bai = output_bam_path.with_suffix(output_bam_path.suffix + ".bai")
+        if bai.exists():
+            bai.unlink()
+        pysam.index(str(output_bam_path))
+
+    print(f"Subset BAM written to: {output_bam_path}")
+    if index_output:
+        print(f"Index written to: {output_bam_path}.bai")
+
+    return output_bam_path
+
+
+
+def bam_to_sam(bam_path, sam_path=None):
+    # # Example usage:
+    # bam_to_sam("input.bam", "output.sam")
+    bam_path = Path(bam_path)
+    if sam_path is None:
+        sam_path = bam_path.with_suffix(".sam")
+    else:
+        sam_path = Path(sam_path)
+
+    with pysam.AlignmentFile(bam_path, "rb") as bam_file:
+        with pysam.AlignmentFile(sam_path, "w", header=bam_file.header) as sam_file:
+            for read in bam_file.fetch(until_eof=True):
+                sam_file.write(read)
+
+    print(f"Converted BAM → SAM: {sam_path}")
+    return sam_path
+
+
+import pysam
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from pathlib import Path
+
+def plot_bam_quality_metrics(bam_path):
+    # # Example usage
+    # plot_bam_quality_metrics("input.bam")
+
+    bam_path = Path(bam_path)
+
+    read_lengths = []
+    mapping_qualities = []
+    avg_base_qualities = []
+
+    with pysam.AlignmentFile(bam_path, "rb") as bam_file:
+        for read in bam_file.fetch(until_eof=True):
+            # Skip secondary/supplementary if you only want primary alignments
+            if read.is_secondary or read.is_supplementary:
+                continue
+
+            read_lengths.append(read.query_length)
+            mapping_qualities.append(read.mapping_quality)
+            if read.query_qualities is not None:
+                avg_base_qualities.append(np.mean(read.query_qualities))
+            else:
+                avg_base_qualities.append(np.nan)
+
+    # Set plot style
+    sns.set(style="whitegrid", font_scale=1.2)
+
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+    # Read length distribution
+    sns.histplot(read_lengths, bins=50, kde=False, ax=axes[0], color="steelblue")
+    axes[0].set_title("Read Length Distribution")
+    axes[0].set_xlabel("Read Length (bp)")
+    axes[0].set_ylabel("Count")
+
+    # Mapping quality distribution
+    sns.histplot(mapping_qualities, bins=60, kde=False, ax=axes[1], color="orange")
+    axes[1].set_title("Mapping Quality Distribution")
+    axes[1].set_xlabel("Mapping Quality")
+    axes[1].set_ylabel("Count")
+
+    # Average base quality distribution
+    sns.histplot(avg_base_qualities, bins=50, kde=False, ax=axes[2], color="green")
+    axes[2].set_title("Average Base Quality per Read")
+    axes[2].set_xlabel("Average Phred Quality Score")
+    axes[2].set_ylabel("Count")
+
+    plt.tight_layout()
+    plt.show()
+
+    print(f"Total reads processed: {len(read_lengths)}")
+
 
 
 def visualize_data_old(reads_df):
