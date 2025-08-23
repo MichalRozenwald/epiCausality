@@ -176,6 +176,7 @@ def plot_alignment_heatmap(
     vmin: Optional[float] = None,
     vmax: Optional[float] = None,
     show_colorbar: bool = True,
+    show_read_names:  bool = False,
 ):
     """
     Plot the alignment heatmap with clean y-axis ticks at row centers.
@@ -185,7 +186,7 @@ def plot_alignment_heatmap(
         raise ValueError("Empty matrix: nothing to plot.")
 
     nreads = matrix.shape[0]
-    plt.figure(figsize=(10, max(4, nreads * 0.02)))
+    plt.figure(figsize=(10, max(16, nreads * 0.02)))
     im = plt.imshow(
         matrix,
         aspect="auto",
@@ -206,7 +207,7 @@ def plot_alignment_heatmap(
 
     # If read names available and match row count, use them; otherwise index numbers
     read_names = meta.get("read_names")
-    if isinstance(read_names, list) and len(read_names) == nreads:
+    if show_read_names and isinstance(read_names, list) and len(read_names) == nreads:
         labels = [rn if len(rn) <= 30 else rn[:14] + "…" + rn[-14:] for rn in read_names]
         ax.set_yticklabels(labels, fontsize=8)
     else:
