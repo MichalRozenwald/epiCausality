@@ -7,6 +7,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+import os
 
 from datetime import datetime
 from dimelo import parse_bam, plot_reads, load_processed, plot_read_browser
@@ -560,9 +561,11 @@ def plot_bam_quality_metrics(bam_path):
                 avg_base_qualities.append(np.nan)
 
     # Set plot style
-    sns.set(style="whitegrid", font_scale=1.2)
+    # sns.set(style="whitegrid", font_scale=1.2)
+    sns.set(font_scale=1.2)
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+    
 
     # Read length distribution
     sns.histplot(read_lengths, bins=50, kde=False, ax=axes[0], color="steelblue")
@@ -581,6 +584,11 @@ def plot_bam_quality_metrics(bam_path):
     axes[2].set_title("Average Base Quality per Read")
     axes[2].set_xlabel("Average Phred Quality Score")
     axes[2].set_ylabel("Count")
+
+    # plt.title(f"Run Quality for bam file \n {os.path.basename(bam_path)}\n Total reads processed: {len(read_lengths)}")
+    plt.suptitle(f"Run Quality for bam file \n {os.path.basename(bam_path)}\n Total reads processed: {len(read_lengths)}", fontsize=12) 
+
+    fig.subplots_adjust(top=0.88) # Adjust this value as needed
 
     plt.tight_layout()
     plt.show()
