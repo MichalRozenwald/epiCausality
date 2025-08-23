@@ -186,7 +186,7 @@ def plot_alignment_heatmap(
         raise ValueError("Empty matrix: nothing to plot.")
 
     nreads = matrix.shape[0]
-    plt.figure(figsize=(10, max(16, nreads * 0.02)))
+    plt.figure(figsize=(10, max(10, nreads * 0.02)))
     im = plt.imshow(
         matrix,
         aspect="auto",
