@@ -33,6 +33,72 @@ def _fetch_reference_slice(reference_fasta: str, chrom: str, start: int, end: in
     return np.array(list(seq), dtype="<U1")
 
 
+def get_read_info_by_name(bam_path, read_name):
+    """
+    Print information about a read in a BAM file given its query name.
+
+    Parameters
+    ----------
+    bam_path : str or Path
+        Path to the BAM file.
+    read_name : str
+        Query name (ID) of the read to search for.
+
+    Output
+    ------
+    Prints the index number, read name, reference name, start/end coordinates,
+    mapping quality, and strand orientation for the first matching read.
+
+    Goal
+    ----
+    Quickly locate and display alignment details for a specific read by its name.
+    """
+    with pysam.AlignmentFile(bam_path, "rb") as bamfile:
+        for i, read in enumerate(bamfile):
+            if read.query_name == read_name:
+                print(f"Read Index Number: {i}")
+                print(f"Read name: {read.query_name}")
+                print(f"Reference name: {bamfile.get_reference_name(read.reference_id)}")
+                print(f"Start: {read.reference_start}")
+                print(f"End: {read.reference_end}")
+                print(f"Mapping quality:  {read.mapping_quality}")
+                print(f"Is reverse: {read.is_reverse}")
+                break
+
+
+def get_read_info_by_index(bam_path, read_index):
+    """
+    Print information about a read in a BAM file given its index.
+
+    Parameters
+    ----------
+    bam_path : str or Path
+        Path to the BAM file.
+    read_index : int
+        Index (0-based) of the read to retrieve.
+
+    Output
+    ------
+    Prints the read index, read name, start, and end coordinates for the specified read.
+
+    Goal
+    ----
+    Quickly display alignment details for a read at a specific index in the BAM file.
+    """
+    with pysam.AlignmentFile(bam_path, "rb") as bamfile:
+        for i, read in enumerate(bamfile):
+            if i == read_index:
+                print(f"Read Index Number: {i}")
+                print(f"Read name: {read.query_name}")
+                print(f"Reference name: {bamfile.get_reference_name(read.reference_id)}")
+                print(f"Start: {read.reference_start}")
+                print(f"End: {read.reference_end}")
+                print(f"Mapping quality:  {read.mapping_quality}")
+                print(f"Is reverse: {read.is_reverse}")
+                break
+
+
+
 def build_alignment_heatmap(
     bam_path: str | Path,
     region: str,
