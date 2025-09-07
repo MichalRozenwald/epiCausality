@@ -6,6 +6,48 @@ from typing import Optional, Tuple, Dict, List
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+''' 
+1. > "How are the quality scores and alignment scores calculated?"
+    Quality scores in your code are the per-base Phred scores from the BAM file, 
+    accessed via read.query_qualities. These scores represent the probability that 
+    a base call is incorrect, with higher scores indicating higher confidence.
+
+    Alignment scores in your heatmap are calculated for each base in the read that 
+    aligns to a reference position within the specified region. The calculation 
+    depends on the mode parameter:
+
+    For each aligned base (where both rpos and refpos are not None), the code compares the read base (base = qseq[rpos].upper()) to the reference base (refb = ref_arr[col]).
+    If the bases match and are A/C/G/T:
+    'quality_signed': +q (positive Phred score)
+    'quality': q (Phred score)
+    'binary' or 'ternary': 1.0
+    If the bases mismatch (including ambiguous bases):
+    'quality_signed': -q (negative Phred score)
+    'quality': 0.0
+    'binary': -1.0
+    'ternary': 0.0
+    If there is an indel or soft clip (i.e., rpos or refpos is None), the score is left as np.nan.
+    Summary:
+
+    Quality scores: Directly from the BAM file, per-base Phred scores.
+    Alignment scores: Calculated per reference position, based on 
+    match/mismatch and the selected mode, using the quality score for matches/mismatches. 
+    Indels/clips are set to NaN.
+
+2. > "What are rpos and refpos?"
+rpos and refpos are variables representing positions in the read and reference, 
+respectively, as returned by the read.get_aligned_pairs() method from pysam.
+
+rpos: The position (index) of a base in the read sequence (read.query_sequence).
+refpos: The position (index) of the corresponding base in the reference genome.
+Each tuple (rpos, refpos) describes how a base in the read aligns to a base in the reference.
+
+If both are not None, the base is aligned (match or mismatch).
+If rpos is None, it's a deletion in the read (relative to the reference).
+If refpos is None, it's an insertion or soft clip in the read (relative to the reference).
+'''
+
+
 
 def _parse_region(region: Optional[str], bam: pysam.AlignmentFile) -> Tuple[Optional[str], Optional[int], Optional[int], Optional[int]]:
     """
