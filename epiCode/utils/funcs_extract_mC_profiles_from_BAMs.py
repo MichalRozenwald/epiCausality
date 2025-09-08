@@ -257,7 +257,8 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                             experiment_name, output_dir, 
                             keep_full_coverage_reads_only=True,
                             save_indels_mismatches_count_csv_path="indels_mismatches_count.csv",
-                            fraction_overlap_aligned_threshold=0.5, fraction_mismatches_threshold=0.5):
+                            fraction_overlap_aligned_threshold=0.5, fraction_mismatches_threshold=0.5,
+                            max_reads_plot=3000):
                             # indel_fraction_threshold=0.5, non_fraction_threshold=0.5):
     """
     Process extracted reads into a DataFrame, ensuring only reads that cover the full start to end DNA coordinates are included.
@@ -299,6 +300,8 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
     # non_fraction_threshold : float, optional    
     #     Threshold for the fraction of Nones allowed per read. Reads with a higher fraction will be removed.     
     #     Default is 0.5 (50%).
+    max_reads_plot :  int, optional
+        Maximum number of reads to plot in the heatmap. Default is 3000.
         
     Returns:
     --------
@@ -509,7 +512,7 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                                 ref_genome_path,
                                 heatmap_title = "Read Quality Heatmap for all original full BAM " + experiment_name,
                                 mode= "quality_signed",
-                                max_reads = None,
+                                max_reads =  max_reads_plot,
                                 primary_only = True,
                                 min_mapq = None,  
                                 save_matrix= False)
@@ -519,12 +522,13 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                                 ref_genome_path,
                                 heatmap_title = "Read Quality Heatmap for filtered reads " + experiment_name,
                                 mode= "quality_signed",
-                                max_reads = None,
+                                max_reads = max_reads_plot,
                                 primary_only = True,
                                 min_mapq = None,  
                                 save_matrix= False)
 
-
+    plot_bam_quality_metrics(original_bam_path)
+    plot_bam_quality_metrics(filtered_output_bam_path)
     
     return mCG_reads_df, region_dict
 
