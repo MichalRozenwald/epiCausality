@@ -257,7 +257,8 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                             experiment_name, output_dir, 
                             keep_full_coverage_reads_only=True,
                             save_indels_mismatches_count_csv_path="indels_mismatches_count.csv",
-                            fraction_overlap_aligned_threshold=0.5, fraction_mismatches_threshold=0.5,
+                            threshold_fraction_overlap_aligned=0.5, threshold_fraction_mismatches=0.5, 
+                            threshold_mapping_qualities=60, threshold_avg_base_qualities=20,
                             max_reads_plot=3000):
                             # indel_fraction_threshold=0.5, non_fraction_threshold=0.5):
     """
@@ -288,12 +289,21 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
     save_indels_mismatches_count_csv_path : str, optional
         Path to save the CSV file with indel and mismatch counts per read. Default is "indels_mismatches_count.csv".
     
-    fraction_overlap_aligned_threshold : float, optional
+    threshold_fraction_overlap_aligned : float, optional
         Threshold for the fraction of overlap aligned bases allowed per read. Reads with a lower fraction will be removed.
         Default is 0.5 (50%).
-    fraction_mismatches_threshold : float, optional
+    threshold_fraction_mismatches : float, optional
         Threshold for the fraction of mismatches allowed per read. Reads with a higher fraction will be removed.    
         Default is 0.5 (50%).
+
+    threshold_mapping_qualities :  float, optional
+        Threshold for the mapping quality allowed per read. Reads with a lower mapping quality will be removed.
+        Default is 60.
+
+    threshold_avg_base_qualities : float, optional
+        Threshold for the average base quality allowed per read. Reads with a lower average base quality will be removed.
+        Default is 20.
+
     # indel_fraction_threshold : float, optional  
     #     Threshold for the fraction of indels (deletions/insertions/soft clips) allowed per read. Reads with a higher fraction will be removed.
     #     Default is 0.5 (50%).
@@ -449,12 +459,20 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                 # reads_with_overlap_indel_mismatch_counts_df['overlap_aligned_fraction'] = reads_with_overlap_indel_mismatch_counts_df['num_overlap_aligned_bases'] / region_length
                 # Keep only reads with indel_fraction <= indel_fraction_threshold
                 # filtered_reads_with_overlap_indel_mismatch_counts_df = reads_with_overlap_indel_mismatch_counts_df.copy()
-                filtered_reads_with_overlap_indel_mismatch_counts_df = reads_with_overlap_indel_mismatch_counts_df[reads_with_overlap_indel_mismatch_counts_df['fraction_overlap_aligned'] >= fraction_overlap_aligned_threshold].copy()
-                print(f"After removing reads with <{fraction_overlap_aligned_threshold*100}% fraction_overlap_aligned_threshold: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+                filtered_reads_with_overlap_indel_mismatch_counts_df = reads_with_overlap_indel_mismatch_counts_df[reads_with_overlap_indel_mismatch_counts_df['fraction_overlap_aligned'] >= threshold_fraction_overlap_aligned].copy()
+                print(f"After removing reads with <{threshold_fraction_overlap_aligned*100}% threshold_fraction_overlap_aligned: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
 
                 
-                filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['fraction_mismatches'] < fraction_mismatches_threshold].copy()
-                print(f"After removing reads with >{fraction_mismatches_threshold*100}% fraction_mismatches_threshold: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+                filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['fraction_mismatches'] < threshold_fraction_mismatches].copy()
+                print(f"After removing reads with >{threshold_fraction_mismatches*100}% threshold_fraction_mismatches: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+
+                # Remove reads with mapping_qualities >= 60
+                filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['mapping_qualities'] >= threshold_mapping_qualities].copy()
+                print(f"After removing reads with >{threshold_mapping_qualities} threshold_mapping_qualities: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+
+                # Remove reads with avg_base_qualities > 20
+                filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['avg_base_qualities'] >= threshold_avg_base_qualities].copy()
+                print(f"After removing reads with >{threshold_avg_base_qualities} threshold_avg_base_qualities: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
 
                 # # Calculate fraction of Nones per read
                 # filtered_reads_with_indel_mismatch_counts_df['nones_fraction'] = filtered_reads_with_indel_mismatch_counts_df['num_nones'] / region_length
@@ -502,11 +520,11 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
     print(f"Final result: {len(mCG_reads_df)} reads with methylation information out of {len(all_read_names)} total reads")
     
     # if save_filtered_reads_bam:
-    filtered_reads_bam_name = "filtered_reads_overlap_MORE_than_" + str(fraction_overlap_aligned_threshold) + "_" + experiment_name + ".bam"
+    filtered_reads_bam_name = "filtered_reads_overlap_MORE_than_" + str(threshold_fraction_overlap_aligned) + "_" + experiment_name + ".bam"
     filtered_output_bam_path=Path(output_dir, filtered_reads_bam_name)
     # filtered_output_bam_path
     subset_BAM_by_read_IDs(original_bam_path, mCG_reads_df, output_bam_path=filtered_output_bam_path, index_output=True)
-    print(f"Filtered BAM with reads that have mC and base overlap > {fraction_overlap_aligned_threshold} written to \n {filtered_output_bam_path}")
+    print(f"Filtered BAM with reads that have mC and base overlap > {threshold_fraction_overlap_aligned} written to \n {filtered_output_bam_path}")
     plot_reads_quality_heatmap(original_bam_path, 
                                 region, 
                                 ref_genome_path,
