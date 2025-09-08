@@ -342,3 +342,111 @@ def plot_alignment_heatmap(
 
         # Display the plot
         plt.show()
+
+
+# import pysam
+# import pandas as pd
+# from pathlib import Path
+def count_indels_and_mismatches(bam_path, ref_genome_path, region=None, output_csv=None):
+    """
+    Calculate the number of indels (insertions/deletions/soft clips), mismatches, and None values for each read in a BAM file.
+    Saves the results into a table (CSV if output_csv is provided).
+
+    Parameters
+    ----------
+    bam_path : str or Path
+        Path to the BAM file.
+    ref_genome_path : str or Path
+        Path to the reference FASTA file (indexed).
+    region : str, optional
+        Genomic region 'chr:start-end' to restrict analysis.
+    output_csv : str or Path, optional
+        Path to save the output table as CSV.
+
+    Output
+    ------
+    DataFrame with columns: ['read_name_str', 'num_indels', 'num_mismatches', 'num_nones']
+
+    Goal
+    ----
+    For each read, count the number of indels, mismatches, and None values, and save the results.
+    """
+    bam_path = Path(bam_path)
+    fa = pysam.FastaFile(str(ref_genome_path))
+    with pysam.AlignmentFile(str(bam_path), "rb") as bam:
+        if region:
+            chrom, rng = region.split(":")
+            start, end = map(int, rng.replace(",", "").split("-"))
+            reads = bam.fetch(chrom, start, end)
+            print(f"In function count_indels_and_mismatches: Processing region is {region}")
+            print(f"In function count_indels_and_mismatches: Region length is {end - start}")
+        else:
+            reads = bam.fetch()
+
+        results = []
+        for read in reads:
+            if read.is_unmapped or read.query_sequence is None:
+                continue
+
+            num_overlap_aligned_bases = read.get_overlap(start, end) # self, uint32_t start, uint32_t end)
+                # return number of aligned bases of read overlapping the interval start and end on the reference sequence.
+                # Return None if cigar alignment is not available.
+
+            num_nones = 0
+            # num_indels = 0
+            num_inserts = 0
+            num_mismatches = 0
+            num_ambiguous = 0
+            qseq = read.query_sequence
+            # Get aligned pairs with sequence
+            for rpos, refpos in read.get_aligned_pairs(matches_only=False, with_seq=False):
+                if rpos is None and refpos is None:
+                    raise ValueError("Both rpos and refpos are None, which should not happen.")
+
+                elif rpos is None:
+                    # rpos is None, it's a deletion in the read (relative to the reference).
+                    # deletion relative to reference; keep as NaN (or 0, but NaN is clearer) 
+                    # num_indels += 1
+                    num_nones += 1
+
+                elif refpos is None:
+                    # If refpos is None, it's an insertion or soft clip in the read (relative to the reference).
+                    # insertion relative to reference (or soft clip) → no reference column
+                    num_inserts += 1
+                     
+                else:
+                    # Both rpos and refpos are not None, the base is aligned (match or mismatch)
+                    base = qseq[rpos].upper()
+                    ref_base = fa.fetch(bam.get_reference_name(read.reference_id), refpos, refpos+1).upper()
+                    if base != ref_base and base in "ACGT" and ref_base in "ACGT":
+                        num_mismatches += 1
+                    elif base not in "ACGT" or ref_base not in "ACGT":
+                        num_ambiguous += 1 # count ambiguous bases as None
+                
+            results.append({
+                "read_name_str": read.query_name,
+                "num_overlap_aligned_bases": num_overlap_aligned_bases,
+                "fraction_overlap_aligned": num_overlap_aligned_bases / (end - start) if region else None,
+                # "num_indels": num_indels,
+                "num_nones": num_nones,
+                "fraction_nones": num_nones / len(read.query_sequence) if len(read.query_sequence) > 0 else None,
+                "num_inserts": num_inserts,
+                "fraction_inserts": num_inserts / len(read.query_sequence) if len(read.query_sequence) > 0 else None,
+                "num_mismatches": num_mismatches,
+                "fraction_mismatches": num_mismatches / len(read.query_sequence) if len(read.query_sequence) > 0 else None,
+                "num_ambiguous": num_ambiguous,
+
+            })
+    fa.close()
+
+    read_indel_mismatch_counts_df = pd.DataFrame(results)
+    if output_csv:
+        read_indel_mismatch_counts_df.to_csv(output_csv, index=False)
+    return read_indel_mismatch_counts_df
+# Example usage:
+# bam_path = "/path/to/your.bam"
+# ref_genome_path = "/path/to/reference.fasta"
+# region = "chr1:100000-200000"  # Optional region
+# output_csv = "/path/to/output.csv"  # Optional output CSV path
+# df = count_indels_and_mismatches(bam_path, ref_genome_path, region, output_csv)
+# print(df.head())          
