@@ -16,7 +16,7 @@ import h5py
 
 # Import the function from funcs_check_quality_bams.py
 sys.path.append("/home/michalula/code/epiCausality/epiCode/utils/")
-from funcs_check_quality_bams import count_indels_and_mismatches
+from funcs_check_quality_bams import count_indels_and_mismatches, plot_reads_quality_heatmap
 
 def system_info():
     """Print system information."""
@@ -252,8 +252,9 @@ def process_extracted_reads_no_fully_unmethylated(extract_file, region, motifs, 
 #     return sum(score is None for score in scores)
 
 
-def process_extracted_reads(extract_file, bam_path, region, motifs, 
+def process_extracted_reads(extract_file, original_bam_path, region, motifs, 
                             ref_seq_list, ref_genome_path,
+                            experiment_name, output_dir, 
                             keep_full_coverage_reads_only=True,
                             save_indels_mismatches_count_csv_path="indels_mismatches_count.csv",
                             fraction_overlap_aligned_threshold=0.5, fraction_mismatches_threshold=0.5):
@@ -266,7 +267,7 @@ def process_extracted_reads(extract_file, bam_path, region, motifs,
     -----------
     extract_file : str or Path
         Path to the HDF5 file containing extracted read data
-    bam_path : str or Path
+    original_bam_path : str or Path
         Path to the corresponding original BAM file for counting indels and mismatches
     region : str
         Genomic region in format 'chr:start-end' (e.g., 'chr1:206586162-206586192')
@@ -276,6 +277,10 @@ def process_extracted_reads(extract_file, bam_path, region, motifs,
         Reference sequence as a list of nucleotides
     ref_genome_path : str or Path
         Path to the reference genome FASTA file
+    experiment_name:    str
+        Name of the experiment for labeling outputs
+    output_dir : str or Path    
+        Directory to save output files
     keep_full_coverage_reads_only : bool, optional
         If True, only keeps reads that cover the full start to end DNA coordinates. If False, keeps all reads.
         Default is True.
@@ -383,7 +388,7 @@ def process_extracted_reads(extract_file, bam_path, region, motifs,
     
     print(f"Unique read names with methylation: {len(mCG_reads_df['read_name'].unique())}")
 
-    read_indel_mismatch_counts_df = count_indels_and_mismatches(bam_path, ref_genome_path, region, output_csv=save_indels_mismatches_count_csv_path)
+    read_indel_mismatch_counts_df = count_indels_and_mismatches(original_bam_path, ref_genome_path, region, output_csv=save_indels_mismatches_count_csv_path)
 
     # Filter reads based on coverage criteria
     if keep_full_coverage_reads_only:
@@ -492,6 +497,35 @@ def process_extracted_reads(extract_file, bam_path, region, motifs,
     )
 
     print(f"Final result: {len(mCG_reads_df)} reads with methylation information out of {len(all_read_names)} total reads")
+    
+    # if save_filtered_reads_bam:
+    filtered_reads_bam_name = "filtered_reads_overlap_MORE_than_" + str(fraction_overlap_aligned_threshold) + "_" + experiment_name + ".bam"
+    filtered_output_bam_path=Path(output_dir, filtered_reads_bam_name)
+    # filtered_output_bam_path
+    subset_BAM_by_read_IDs(original_bam_path, mCG_reads_df, output_bam_path=filtered_output_bam_path, index_output=True)
+    print(f"Filtered BAM with reads that have mC and base overlap > {fraction_overlap_aligned_threshold} written to \n {filtered_output_bam_path}")
+    plot_reads_quality_heatmap(original_bam_path, 
+                                region, 
+                                ref_genome_path,
+                                heatmap_title = "Read Quality Heatmap for all original full BAM " + experiment_name,
+                                mode= "quality_signed",
+                                max_reads = None,
+                                primary_only = True,
+                                min_mapq = None,  
+                                save_matrix= False)
+
+    plot_reads_quality_heatmap(filtered_output_bam_path, 
+                                region, 
+                                ref_genome_path,
+                                heatmap_title = "Read Quality Heatmap for filtered reads " + experiment_name,
+                                mode= "quality_signed",
+                                max_reads = None,
+                                primary_only = True,
+                                min_mapq = None,  
+                                save_matrix= False)
+
+
+    
     return mCG_reads_df, region_dict
 
     # except Exception as e:

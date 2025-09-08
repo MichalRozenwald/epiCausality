@@ -316,7 +316,6 @@ def plot_alignment_heatmap(
     # --- Fix: y-axis at row centers (0..N-1), no -0.5/1.5 edges ---
     ax = plt.gca()
     ax.set_yticks(np.arange(nreads))
-
     # If read names available and match row count, use them; otherwise index numbers
     read_names = meta.get("read_names")
     if show_read_names and isinstance(read_names, list) and len(read_names) == nreads:
@@ -325,23 +324,54 @@ def plot_alignment_heatmap(
     else:
         ax.set_yticklabels([str(i) for i in range(nreads)], fontsize=8)
     # --------------------------------------------------------------
-
     if show_colorbar:
         plt.colorbar(im,cmap='plasma') # cmap='viridis') 
-
     plt.tight_layout()
     plt.show()
 
     # Create the clustermap and customize the colorbar
     if show_clustered_heatmap:
         # sns.clustermap(G_revs_df.fillna(-1), col_cluster=False)
-
-        g = sns.clustermap(pd.DataFrame(matrix).fillna(-1), col_cluster=False, cmap='plasma')  # , cbar_kws={'label': "Y labet") # , 'orientation': 'vertical'
-
-        g.ax_cbar.set_title("Clustered" + title, pad=16)
-
+        g = sns.clustermap(pd.DataFrame(matrix).fillna(100), col_cluster=False, cmap='plasma')  # , cbar_kws={'label': "Y labet") # , 'orientation': 'vertical'
+        g.ax_cbar.set_title("Clustered" + title + "\n Fill NA with +100", pad=16)
         # Display the plot
         plt.show()
+
+
+def plot_reads_quality_heatmap(
+    bam_path: str | Path,
+    region: str,
+    ref_genome_path: str | Path,
+    heatmap_title: str = "Read Quality Heatmap",
+    mode: str = "quality_signed",
+    max_reads: Optional[int] = None,
+    primary_only: bool = True,
+    min_mapq: Optional[int] = None,
+    save_matrix: bool = False,
+):
+    """
+    Convenience function to build and plot a quality heatmap for reads in a BAM over a region.
+
+    # Example usage:
+    region_str = "chr1:206586100-206586220"  # keep windows reasonably small
+    original_bam_path = "/home/michalula/data/ont/t2t               
+    bam = original_bam_path #  unedit_bam_path # removed_reads_bam_path # "/path/to/your.bam"
+    ref_genome_path = Path('/home/michalula/data/ref_genomes/t2t_v2_0/up_chm13v2.0.fasta') # ref = "/path/to/reference.fa"  # must have .fai index
+    plot_reads_quality_heatmap(bam, region_str, ref_genome_path, mode="quality_signed", max_reads=5000, primary_only=True, min_mapq=20, save_matrix=False)
+    """
+    matrix, meta = build_alignment_heatmap(
+        bam_path=bam_path,
+        region=region,
+        reference_fasta=ref_genome_path,  # Not needed for quality heatmap
+        mode=mode,  # Use "quality_signed" for signed or 'quality' mode for per-base Phred scores
+        max_reads=max_reads,
+        primary_only=primary_only,
+        min_mapq=min_mapq,
+        include_unmapped=False,
+    )
+    plot_alignment_heatmap(matrix, meta, heatmap_title, vmin=None, vmax=None)
+    if save_matrix:
+        np.save("alignment_heatmap_matrix.npy", matrix)
 
 
 # import pysam
