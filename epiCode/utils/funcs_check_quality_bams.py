@@ -404,6 +404,11 @@ def count_indels_and_mismatches(bam_path, ref_genome_path, region=None, output_c
     """
     bam_path = Path(bam_path)
     fa = pysam.FastaFile(str(ref_genome_path))
+
+    read_lengths = []
+    mapping_qualities = []
+    avg_base_qualities = []
+
     with pysam.AlignmentFile(str(bam_path), "rb") as bam:
         if region:
             chrom, rng = region.split(":")
@@ -414,10 +419,22 @@ def count_indels_and_mismatches(bam_path, ref_genome_path, region=None, output_c
         else:
             reads = bam.fetch()
 
+
         results = []
         for read in reads:
             if read.is_unmapped or read.query_sequence is None:
                 continue
+
+            # Skip secondary/supplementary if you only want primary alignments
+            if read.is_secondary or read.is_supplementary:
+                continue
+
+            read_lengths.append(read.query_length)
+            mapping_qualities.append(read.mapping_quality)
+            if read.query_qualities is not None:
+                avg_base_qualities.append(np.mean(read.query_qualities))
+            else:
+                avg_base_qualities.append(np.nan)
 
             num_overlap_aligned_bases = read.get_overlap(start, end) # self, uint32_t start, uint32_t end)
                 # return number of aligned bases of read overlapping the interval start and end on the reference sequence.
@@ -456,6 +473,9 @@ def count_indels_and_mismatches(bam_path, ref_genome_path, region=None, output_c
                 
             results.append({
                 "read_name_str": read.query_name,
+                "read_lengths": read.query_length,
+                "mapping_qualities": read.mapping_quality,
+                "avg_base_qualities": avg_base_qualities[-1],
                 "num_overlap_aligned_bases": num_overlap_aligned_bases,
                 "fraction_overlap_aligned": num_overlap_aligned_bases / (end - start) if region else None,
                 # "num_indels": num_indels,
