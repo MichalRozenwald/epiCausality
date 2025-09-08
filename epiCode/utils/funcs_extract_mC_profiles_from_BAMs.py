@@ -14,6 +14,10 @@ from dimelo import parse_bam, plot_reads, load_processed, plot_read_browser
 import h5py
 
 
+# Import the function from funcs_check_quality_bams.py
+sys.path.append("/home/michalula/code/epiCausality/epiCode/utils/")
+from funcs_check_quality_bams import count_indels_and_mismatches
+
 def system_info():
     """Print system information."""
     print('System:', platform.system())
@@ -49,22 +53,22 @@ def create_output_directory(path):
         return None
 
 def extract_from_bam(experiment_name, bam_path, ref_genome_file, output_dir, window_size=None, threshold_mC=0.99, 
-                    num_cores=32, regions='chr1:206586162-206586192', motifs=['CG,0'], 
+                    num_cores=32, region='chr1:206586162-206586192', motifs=['CG,0'], 
                     output_name='extract_output', save_fig=True):
     """Processes a BAM file using parse_bam.extract and plots the extracted reads."""
     try:
-        # Parse regions to calculate region length
-        region_chr, region_coords = regions.split(':')
+        # Parse region to calculate region length
+        region_chr, region_coords = region.split(':')
         region_start, region_end = map(int, region_coords.split('-'))
         region_length = region_end - region_start
         print(f"Region length: {region_length}")
 
-        extract_file, extract_regions = parse_bam.extract(
+        extract_file, extract_region = parse_bam.extract(
             input_file=bam_path,
             output_name=output_name,
             ref_genome=ref_genome_file,
             output_directory=output_dir,
-            regions=regions,
+            regions=region,
             motifs=motifs,
             thresh=threshold_mC,
             window_size=window_size,
@@ -73,7 +77,7 @@ def extract_from_bam(experiment_name, bam_path, ref_genome_file, output_dir, win
         if threshold_mC == None: 
             fig_plot_browser = plot_read_browser.plot_read_browser(
                 mod_file_name=extract_file,# mod_file_name: str | Path,
-                region=regions, #region: str,
+                region=region, #region: str,
                 motifs=motifs, #motifs: list[str],
                 thresh=threshold_mC, # thresh: int | float | None = None,
                 single_strand = False, # : bool = False,
@@ -81,33 +85,33 @@ def extract_from_bam(experiment_name, bam_path, ref_genome_file, output_dir, win
                 hover = True, #: bool = True,
                 )
             fig_plot_browser.update_layout(  
-                title=f"{experiment_name}<br>Extracted Reads for {regions}",
+                title=f"{experiment_name}<br>Extracted Reads for {region}",
             )
             # fig.show()
             if save_fig:
-                output_html_path = Path(output_dir) / f"plot_browser_{region_length}bps_{experiment_name}_extract_reads_{regions}.html"
+                output_html_path = Path(output_dir) / f"plot_browser_{region_length}bps_{experiment_name}_extract_reads_{region}.html"
                 fig_plot_browser.write_html(str(output_html_path))
                 print(f"Plot browser html figure saved to {output_html_path}")
-            return extract_file, extract_regions, fig_plot_browser
+            return extract_file, extract_region, fig_plot_browser
         else: 
             plot_reads.plot_reads(
                 extract_file,
-                regions,
+                region,
                 motifs=motifs,
                 window_size=window_size,
                 sort_by=['shuffle', 'strand'],
                 s=1
             )
-            plt.xlabel(f'bp relative to {regions}')
-            plt.title(f"{experiment_name}<bp>Extracted Reads for {regions}")
+            plt.xlabel(f'bp relative to {region}')
+            plt.title(f"{experiment_name}<bp>Extracted Reads for {region}")
             plt.show()
-        return extract_file, extract_regions
+        return extract_file, extract_region
     
     except Exception as e:
         print("Error in BAM extraction:", e)
         return None, None
 
-def process_extracted_reads_no_fully_unmethylated(extract_file, regions, motifs, ref_seq_list):
+def process_extracted_reads_no_fully_unmethylated(extract_file, region, motifs, ref_seq_list):
     """
     Process extracted reads into a DataFrame.
 
@@ -116,83 +120,83 @@ def process_extracted_reads_no_fully_unmethylated(extract_file, regions, motifs,
         ref_seq_list = get_reference_sequence(ref_genome_v1_1_file, region_chr, region_start, region_end)  
     """
     try:
-        reads, read_names, mods, regions_dict = load_processed.readwise_binary_modification_arrays(
+        reads, read_names, mods, region_dict = load_processed.readwise_binary_modification_arrays(
             file=extract_file,
-            regions=regions,
+            regions=region,
             motifs=motifs
         )
-        reads_df = pd.DataFrame({
+        mCG_reads_df = pd.DataFrame({
             'read_name': read_names,
             'mod': mods,
             'pos': reads
         }).explode('pos')
 
-        # reads_df['pos_shifted'] = reads_df['pos'] + 15
+        # mCG_reads_df['pos_shifted'] = mCG_reads_df['pos'] + 15
         region_length = len(ref_seq_list)
-        reads_df['pos_shifted'] = reads_df['pos'] + (region_length // 2)
-        return reads_df, regions_dict
+        mCG_reads_df['pos_shifted'] = mCG_reads_df['pos'] + (region_length // 2)
+        return mCG_reads_df, region_dict
     except Exception as e:
         print("Error processing extracted reads:", e)
         return None, None
 
 
-def process_extracted_reads_add_fully_unmethylated(extract_file, regions, motifs, ref_seq_list):
-    """
-    Process extracted reads into a DataFrame, ensuring all reads (methylated and unmethylated) are included.
-    """
-    try:
-        # Extract methylation-modified positions
-        mod_coords, read_ids, mods, regions_dict = load_processed.readwise_binary_modification_arrays(
-            file=extract_file,
-            regions=regions,
-            motifs=motifs
-        )
+# def process_extracted_reads_add_fully_unmethylated(extract_file, region, motifs, ref_seq_list):
+#     """
+#     Process extracted reads into a DataFrame, ensuring all reads (methylated and unmethylated) are included.
+#     """
+#     try:
+#         # Extract methylation-modified positions
+#         mod_coords, read_ids, mods, region_dict = load_processed.readwise_binary_modification_arrays(
+#             file=extract_file,
+#             regions=region,
+#             motifs=motifs
+#         )
 
-        # Get all read names (both methylated and unmethylated)
-        with h5py.File(extract_file, "r") as h5:
-            all_read_names = np.array(h5["read_name"], dtype=str)  # Extract all read names
+#         # Get all read names (both methylated and unmethylated)
+#         with h5py.File(extract_file, "r") as h5:
+#             all_read_names = np.array(h5["read_name"], dtype=str)  # Extract all read names
 
-        # Convert read IDs to strings to avoid type mismatches
-        read_ids = np.array(read_ids, dtype=str)
+#         # Convert read IDs to strings to avoid type mismatches
+#         read_ids = np.array(read_ids, dtype=str)
 
-        # Create a DataFrame for methylated reads
-        reads_df = pd.DataFrame({
-            'read_name': read_ids,
-            'mod': mods,
-            'pos': mod_coords
-        })
+#         # Create a DataFrame for methylated reads
+#         mCG_reads_df = pd.DataFrame({
+#             'read_name': read_ids,
+#             'mod': mods,
+#             'pos': mod_coords
+#         })
 
-        # Ensure 'pos' is converted to numeric type
-        reads_df['pos'] = pd.to_numeric(reads_df['pos'], errors='coerce')
+#         # Ensure 'pos' is converted to numeric type
+#         mCG_reads_df['pos'] = pd.to_numeric(mCG_reads_df['pos'], errors='coerce')
 
-        # Identify unmethylated reads (present in BAM but missing from reads_df)
-        methylated_reads = set(reads_df['read_name'])
-        unmethylated_reads = [read for read in all_read_names if read not in methylated_reads]
+#         # Identify unmethylated reads (present in BAM but missing from mCG_reads_df)
+#         methylated_reads = set(mCG_reads_df['read_name'])
+#         unmethylated_reads = [read for read in all_read_names if read not in methylated_reads]
 
-        # Create a DataFrame for unmethylated reads (no positions)
-        unmethylated_df = pd.DataFrame({
-            'read_name': unmethylated_reads,
-            'mod': None,
-            'pos': np.nan  # No methylation site
-        })
+#         # Create a DataFrame for unmethylated reads (no positions)
+#         unmethylated_df = pd.DataFrame({
+#             'read_name': unmethylated_reads,
+#             'mod': None,
+#             'pos': np.nan  # No methylation site
+#         })
 
-        # Combine both DataFrames
-        reads_df = pd.concat([reads_df, unmethylated_df], ignore_index=True)
+#         # Combine both DataFrames
+#         mCG_reads_df = pd.concat([mCG_reads_df, unmethylated_df], ignore_index=True)
 
-        # Ensure 'pos' is numeric for all rows
-        reads_df['pos'] = pd.to_numeric(reads_df['pos'], errors='coerce')
+#         # Ensure 'pos' is numeric for all rows
+#         mCG_reads_df['pos'] = pd.to_numeric(mCG_reads_df['pos'], errors='coerce')
 
-        # Compute shifted positions
-        region_length = len(ref_seq_list)
-        reads_df['pos_shifted'] = reads_df['pos'].apply(
-            lambda x: int(x + (region_length // 2)) if not np.isnan(x) else -1
-        )
+#         # Compute shifted positions
+#         region_length = len(ref_seq_list)
+#         mCG_reads_df['pos_shifted'] = mCG_reads_df['pos'].apply(
+#             lambda x: int(x + (region_length // 2)) if not np.isnan(x) else -1
+#         )
 
-        return reads_df, regions_dict
+#         return mCG_reads_df, region_dict
 
-    except Exception as e:
-        print("Error processing extracted reads:", e)
-        return None, None
+#     except Exception as e:
+#         print("Error processing extracted reads:", e)
+#         return None, None
 
 # def has_no_NONE_alignment_scores(row):
 #     """
@@ -248,7 +252,12 @@ def process_extracted_reads_add_fully_unmethylated(extract_file, regions, motifs
 #     return sum(score is None for score in scores)
 
 
-def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_full_coverage_reads_only=True):
+def process_extracted_reads(extract_file, bam_path, region, motifs, 
+                            ref_seq_list, ref_genome_path,
+                            keep_full_coverage_reads_only=True,
+                            save_indels_mismatches_count_csv_path="indels_mismatches_count.csv",
+                            fraction_overlap_aligned_threshold=0.5, fraction_mismatches_threshold=0.5):
+                            # indel_fraction_threshold=0.5, non_fraction_threshold=0.5):
     """
     Process extracted reads into a DataFrame, ensuring only reads that cover the full start to end DNA coordinates are included.
     This function filters out reads that don't span the complete region of interest.
@@ -257,15 +266,34 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
     -----------
     extract_file : str or Path
         Path to the HDF5 file containing extracted read data
-    regions : str
+    bam_path : str or Path
+        Path to the corresponding original BAM file for counting indels and mismatches
+    region : str
         Genomic region in format 'chr:start-end' (e.g., 'chr1:206586162-206586192')
     motifs : list
         List of motifs to search for (e.g., ['CG,0'])
     ref_seq_list : list
         Reference sequence as a list of nucleotides
+    ref_genome_path : str or Path
+        Path to the reference genome FASTA file
     keep_full_coverage_reads_only : bool, optional
         If True, only keeps reads that cover the full start to end DNA coordinates. If False, keeps all reads.
         Default is True.
+    save_indels_mismatches_count_csv_path : str, optional
+        Path to save the CSV file with indel and mismatch counts per read. Default is "indels_mismatches_count.csv".
+    
+    fraction_overlap_aligned_threshold : float, optional
+        Threshold for the fraction of overlap aligned bases allowed per read. Reads with a lower fraction will be removed.
+        Default is 0.5 (50%).
+    fraction_mismatches_threshold : float, optional
+        Threshold for the fraction of mismatches allowed per read. Reads with a higher fraction will be removed.    
+        Default is 0.5 (50%).
+    # indel_fraction_threshold : float, optional  
+    #     Threshold for the fraction of indels (deletions/insertions/soft clips) allowed per read. Reads with a higher fraction will be removed.
+    #     Default is 0.5 (50%).
+    # non_fraction_threshold : float, optional    
+    #     Threshold for the fraction of Nones allowed per read. Reads with a higher fraction will be removed.     
+    #     Default is 0.5 (50%).
         
     Returns:
     --------
@@ -276,9 +304,9 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
     Example:
     --------
     # Extract reads that cover the full region
-    reads_df, regions_dict = process_extracted_reads(
+    mCG_reads_df, region_dict = process_extracted_reads(
         extract_file='path/to/extracted_reads.h5',
-        regions='chr1:206586162-206586192',
+        region='chr1:206586162-206586192',
         motifs=['CG,0'],
         ref_seq_list=['A', 'T', 'G', 'C', ...],
         keep_full_coverage_reads_only=True
@@ -286,9 +314,9 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
     """
     # try:
     # Extract methylation-modified positions
-    mod_coords, read_ids, mods, regions_dict = load_processed.readwise_binary_modification_arrays(
+    mod_coords, read_ids, mods, region_dict = load_processed.readwise_binary_modification_arrays(
         file=extract_file,
-        regions=regions,
+        regions=region,
         motifs=motifs
     )
 
@@ -322,7 +350,7 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
             print(f"Warning: Could not access read coordinate information: {e}")
 
     # Parse the region to get start and end coordinates
-    region_chr, region_coords = regions.split(':')
+    region_chr, region_coords = region.split(':')
     region_start, region_end = map(int, region_coords.split('-'))
     region_length = region_end - region_start
 
@@ -345,7 +373,7 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
     read_ids = np.array(read_ids, dtype=str)
 
     # Create a DataFrame for methylated reads
-    reads_df = pd.DataFrame({
+    mCG_reads_df = pd.DataFrame({
         'read_name_str': methylated_read_names,
         'read_name': read_ids,
         'read_id_number': read_ids,
@@ -353,7 +381,9 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
         'pos': mod_coords
     })
     
-    print(f"Unique read names with methylation: {len(reads_df['read_name'].unique())}")
+    print(f"Unique read names with methylation: {len(mCG_reads_df['read_name'].unique())}")
+
+    read_indel_mismatch_counts_df = count_indels_and_mismatches(bam_path, ref_genome_path, region, output_csv=save_indels_mismatches_count_csv_path)
 
     # Filter reads based on coverage criteria
     if keep_full_coverage_reads_only:
@@ -375,7 +405,7 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
                             full_coverage_reads.append(read_name)
                 
                 # Check overlap between full coverage reads and reads with methylation data
-                reads_with_methylation = set(reads_df['read_name_str'].unique())
+                reads_with_methylation = set(mCG_reads_df['read_name_str'].unique())
                 full_coverage_set = set(full_coverage_reads)
                 overlap = reads_with_methylation.intersection(full_coverage_set)
                 
@@ -383,20 +413,50 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
                 print(f"Reads with methylation data: {len(reads_with_methylation)}")
                 print(f"Overlap between full coverage and methylation: {len(overlap)}")
                 
-                # Filter the reads_df to only include full coverage reads
-                reads_df = reads_df[reads_df['read_name_str'].isin(full_coverage_reads)]
-                print(f"After full coverage filtering: {len(np.unique(reads_df['read_name_str']))} reads with methylation data")
+                # Filter the mCG_reads_df to only include full coverage reads
+                mCG_reads_df = mCG_reads_df[mCG_reads_df['read_name_str'].isin(full_coverage_reads)]
+                print(f"After full coverage filtering: {len(np.unique(mCG_reads_df['read_name_str']))} reads with methylation data")
                
                 # NEED TO REMOVE READS THAT ARE ONLY PARTLY ALIGNED TO THE REGION.. 
                 # Removing reads that have bases with None alignment scores 
-                # count_alignment_scores_df = reads_df.apply(count_alignment_scores, axis=1)
+                # count_alignment_scores_df = mCG_reads_df.apply(count_alignment_scores, axis=1)
                 # print(f"Count of None alignment scores per read:\n{count_alignment_scores_df.value_counts()}")
                 # print(f"Reads with less than 100 None alignment scores: {(count_alignment_scores_df < 100).sum()}")
                 # print("Reads with 100 or more None alignment scores")
-                # reads_df = reads_df[reads_df.apply(count_alignment_scores, axis=1) < 100]
-                # # reads_df = reads_df[reads_df.apply(has_no_NONE_alignment_scores, axis=1)]
-                # print(f"After removing reads that have bases with None alignment scores and full coverage filtering: {len(np.unique(reads_df['read_name_str']))} reads with methylation data")
+                # mCG_reads_df = mCG_reads_df[mCG_reads_df.apply(count_alignment_scores, axis=1) < 100]
+                # # mCG_reads_df = mCG_reads_df[mCG_reads_df.apply(has_no_NONE_alignment_scores, axis=1)]
+                # print(f"After removing reads that have bases with None alignment scores and full coverage filtering: {len(np.unique(mCG_reads_df['read_name_str']))} reads with methylation data")
+                # Remove reads with more than 50% deletions in the region
+                # Merge mCG_reads_df with read_indel_mismatch_counts_df on read_name/read_name_str
+                reads_with_overlap_indel_mismatch_counts_df = mCG_reads_df.merge(
+                    read_indel_mismatch_counts_df,
+                    left_on='read_name_str',
+                    right_on='read_name_str',
+                    how='left'
+                )
+                # print(reads_with_indel_mismatch_counts_df)
+                # print(f"After full coverage filtering: {len(np.unique(reads_with_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+
+                # Calculate fraction of aligned bases per read
+                # reads_with_overlap_indel_mismatch_counts_df['overlap_aligned_fraction'] = reads_with_overlap_indel_mismatch_counts_df['num_overlap_aligned_bases'] / region_length
+                # Keep only reads with indel_fraction <= indel_fraction_threshold
+                # filtered_reads_with_overlap_indel_mismatch_counts_df = reads_with_overlap_indel_mismatch_counts_df.copy()
+                filtered_reads_with_overlap_indel_mismatch_counts_df = reads_with_overlap_indel_mismatch_counts_df[reads_with_overlap_indel_mismatch_counts_df['fraction_overlap_aligned'] >= fraction_overlap_aligned_threshold].copy()
+                print(f"After removing reads with <{fraction_overlap_aligned_threshold*100}% fraction_overlap_aligned_threshold: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+
                 
+                filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['fraction_mismatches'] < fraction_mismatches_threshold].copy()
+                print(f"After removing reads with >{fraction_mismatches_threshold*100}% fraction_mismatches_threshold: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+
+                # # Calculate fraction of Nones per read
+                # filtered_reads_with_indel_mismatch_counts_df['nones_fraction'] = filtered_reads_with_indel_mismatch_counts_df['num_nones'] / region_length
+                # # Keep only reads with num_none <= indel_fraction_threshold
+                # filtered_reads_with_none_indel_mismatch_counts_df = filtered_reads_with_indel_mismatch_counts_df.copy()
+                # # filtered_reads_with_none_indel_mismatch_counts_df = filtered_reads_with_indel_mismatch_counts_df[filtered_reads_with_indel_mismatch_counts_df['nones_fraction'] <= non_fraction_threshold].copy()
+                # print(f"After removing reads with >{non_fraction_threshold*100}% Nones: {len(np.unique(filtered_reads_with_none_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+
+                # Update mCG_reads_df to the filtered DataFrame
+                mCG_reads_df = filtered_reads_with_overlap_indel_mismatch_counts_df
 
             elif read_coords is not None:
                 # Method 2: Use read_coords if available (assuming it contains start/end pairs)
@@ -407,13 +467,13 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
                         if read_start <= region_start and read_end >= region_end:
                             full_coverage_reads.append(read_name)
                 
-                reads_df = reads_df[reads_df['read_name_str'].isin(full_coverage_reads)]
+                mCG_reads_df = mCG_reads_df[mCG_reads_df['read_name_str'].isin(full_coverage_reads)]
                 print(f"Found {len(full_coverage_reads)} reads with full coverage")
-                print(f"After full coverage filtering: {len(np.unique(reads_df['read_name_str']))} reads with methylation data")
+                print(f"After full coverage filtering: {len(np.unique(mCG_reads_df['read_name_str']))} reads with methylation data")
                 
                 # # Removing reads that have bases with None alignment scores 
-                # reads_df = reads_df[reads_df.apply(has_no_NONE_alignment_scores, axis=1)]
-                # print(f"After removing reads that have bases with None alignment scores and full coverage filtering: {len(np.unique(reads_df['read_name_str']))} reads with methylation data")
+                # mCG_reads_df = mCG_reads_df[mCG_reads_df.apply(has_no_NONE_alignment_scores, axis=1)]
+                # print(f"After removing reads that have bases with None alignment scores and full coverage filtering: {len(np.unique(mCG_reads_df['read_name_str']))} reads with methylation data")
                 
 
         else:
@@ -423,32 +483,32 @@ def process_extracted_reads(extract_file, regions, motifs, ref_seq_list, keep_fu
     # print(f"Converted {len(read_ids)} read IDs to actual read names")
     # print(f"Sample mapping: read_id 0 -> {read_names[0] if len(read_names) > 0 else 'N/A'}")
     # Ensure 'pos' is numeric for all rows
-    reads_df['pos'] = pd.to_numeric(reads_df['pos'], errors='coerce')
+    mCG_reads_df['pos'] = pd.to_numeric(mCG_reads_df['pos'], errors='coerce')
 
     # Compute shifted positions
     region_length = len(ref_seq_list)
-    reads_df['pos_shifted'] = reads_df['pos'].apply(
+    mCG_reads_df['pos_shifted'] = mCG_reads_df['pos'].apply(
         lambda x: int(x + (region_length // 2)) if not np.isnan(x) else -1
     )
 
-    print(f"Final result: {len(reads_df)} reads with methylation information out of {len(all_read_names)} total reads")
-    return reads_df, regions_dict
+    print(f"Final result: {len(mCG_reads_df)} reads with methylation information out of {len(all_read_names)} total reads")
+    return mCG_reads_df, region_dict
 
     # except Exception as e:
     #     print("Error processing extracted reads with full coverage filtering:", e)
     #     return None, None
 
 
-def remove_low_methylated_reads(reads_df, threshold_percent=50):
+def remove_low_methylated_reads(mCG_reads_df, threshold_percent=50):
     """
     Remove reads that have less than a specified percentage of the maximum number 
     of methylated CGs per read in the dataset.
     
     Parameters:
     -----------
-    reads_df : pandas.DataFrame
+    mCG_reads_df : pandas.DataFrame
         DataFrame containing read methylation data with columns: read_name, mod, pos, pos_shifted
-    regions_dict : dict
+    region_dict : dict
         Dictionary containing region information
     threshold_percent : float, optional
         Percentage threshold relative to the mean number of methylated CGs per read.
@@ -463,19 +523,19 @@ def remove_low_methylated_reads(reads_df, threshold_percent=50):
     Example:
     --------
     # Remove reads with less than 10% of max methylation
-    filtered_reads_df = remove_low_methylated_reads(
-        reads_df=reads_df,
+    filtered_mCG_reads_df = remove_low_methylated_reads(
+        mCG_reads_df=mCG_reads_df,
         threshold_percent=10
     )
     """
     try:
         # Count methylated CGs per read
         # Convert mod column to numeric to enable mathematical operations
-        reads_df['num_CG_methylated'] = pd.to_numeric(reads_df['mod'], errors='coerce').fillna(1)
-        # reads_df['num_CG_methylated'] = 1
+        mCG_reads_df['num_CG_methylated'] = pd.to_numeric(mCG_reads_df['mod'], errors='coerce').fillna(1)
+        # mCG_reads_df['num_CG_methylated'] = 1
         
         # Group by read_name and count the number of methylation events (mod=1)
-        methylation_counts = reads_df.groupby('read_name')['num_CG_methylated'].sum().reset_index()
+        methylation_counts = mCG_reads_df.groupby('read_name')['num_CG_methylated'].sum().reset_index()
         methylation_counts.columns = ['read_name', 'methylation_count']
         
         # # Find the maximum number of methylated CGs across all reads
@@ -497,31 +557,31 @@ def remove_low_methylated_reads(reads_df, threshold_percent=50):
         reads_to_remove = methylation_counts[methylation_counts['methylation_count'] < threshold]['read_name'].tolist()
         
         # Filter the original DataFrame
-        filtered_reads_df = reads_df[reads_df['read_name'].isin(reads_to_keep)].copy()
-        remove_reads_df = reads_df[reads_df['read_name'].isin(reads_to_remove)].copy()
+        filtered_mCG_reads_df = mCG_reads_df[mCG_reads_df['read_name'].isin(reads_to_keep)].copy()
+        remove_mCG_reads_df = mCG_reads_df[mCG_reads_df['read_name'].isin(reads_to_remove)].copy()
         
-        print(f"Original number of reads: {len(reads_df['read_name'].unique())}")
-        print(f"Number of reads after filtering: {len(filtered_reads_df['read_name'].unique())}")
-        print(f"Removed {len(reads_df['read_name'].unique()) - len(filtered_reads_df['read_name'].unique())} reads")
+        print(f"Original number of reads: {len(mCG_reads_df['read_name'].unique())}")
+        print(f"Number of reads after filtering: {len(filtered_mCG_reads_df['read_name'].unique())}")
+        print(f"Removed {len(mCG_reads_df['read_name'].unique()) - len(filtered_mCG_reads_df['read_name'].unique())} reads")
         
-        return filtered_reads_df, methylation_counts, remove_reads_df
+        return filtered_mCG_reads_df, methylation_counts, remove_mCG_reads_df
         
     except Exception as e:
         print("Error in remove_low_methylated_reads:", e)
-        return reads_df
+        return mCG_reads_df
 
 import pysam
 from pathlib import Path
 
-def subset_BAM_by_read_IDs(bam_path, remove_reads_df, output_bam_path=None, index_output=True):
+def subset_BAM_by_read_IDs(bam_path, remove_mCG_reads_df, output_bam_path=None, index_output=True):
     """
-    Create a BAM that contains only reads whose names are listed in remove_reads_df['read_name'].
+    Create a BAM that contains only reads whose names are listed in remove_mCG_reads_df['read_name'].
 
     Parameters
     ----------
     bam_path : str | Path
         Path to the source BAM.
-    remove_reads_df : pandas.DataFrame
+    remove_mCG_reads_df : pandas.DataFrame
         DataFrame with a column 'read_name' (the qname in the BAM). Duplicates are OK.
     output_bam_path : str | Path | None
         Where to write the subset BAM. If None, will write alongside the input as
@@ -544,19 +604,19 @@ def subset_BAM_by_read_IDs(bam_path, remove_reads_df, output_bam_path=None, inde
 
     # Determine which column has the read names:
     # Prefer 'read_name' (typical). If not present, try a common alternative used upstream.
-    if 'read_name_str' in remove_reads_df.columns:
-        name_series = remove_reads_df['read_name_str']
-    elif 'read_name' in remove_reads_df.columns:
-        name_series = remove_reads_df['read_name']
+    if 'read_name_str' in remove_mCG_reads_df.columns:
+        name_series = remove_mCG_reads_df['read_name_str']
+    elif 'read_name' in remove_mCG_reads_df.columns:
+        name_series = remove_mCG_reads_df['read_name']
     else:
         raise ValueError(
-            "remove_reads_df must contain a 'read_name' or 'read_name_str' column with BAM qnames."
+            "remove_mCG_reads_df must contain a 'read_name' or 'read_name_str' column with BAM qnames."
         )
 
     # Build a set for fast lookups; ensure strings
     target_names = set(map(str, name_series.dropna().unique()))
     if len(target_names) == 0:
-        raise ValueError("remove_reads_df has no read names to subset.")
+        raise ValueError("remove_mCG_reads_df has no read names to subset.")
 
     # Open input and create output with the same header
     with pysam.AlignmentFile(bam_path, "rb") as in_bam:
@@ -667,15 +727,15 @@ def plot_bam_quality_metrics(bam_path):
 
 
 
-def visualize_data_old(reads_df):
+def visualize_data_old(mCG_reads_df):
     """Generate visualizations for the data."""
     try:
-        reads_df['read_name'].plot(kind='hist', bins=1600, title='#mC of individual Reads Distribution')
+        mCG_reads_df['read_name'].plot(kind='hist', bins=1600, title='#mC of individual Reads Distribution')
         plt.gca().spines[['top', 'right']].set_visible(False)
         plt.show()
 
         sns.scatterplot(
-            data=reads_df,
+            data=mCG_reads_df,
             x="pos",
             y="read_name",
             hue="mod",
@@ -690,22 +750,22 @@ def visualize_data_old(reads_df):
     except Exception as e:
         print("Error in visualization:", e)
 
-def visualize_data(reads_df):
+def visualize_data(mCG_reads_df):
     """Generate visualizations for the data."""
     try:
         # Ensure 'pos' is numeric and drop NaNs
-        reads_df = reads_df.copy()  # Avoid modifying the original DataFrame
-        reads_df['pos'] = pd.to_numeric(reads_df['pos'], errors='coerce')
-        reads_df = reads_df.dropna(subset=['pos'])  # Remove unmethylated reads for plotting
+        mCG_reads_df = mCG_reads_df.copy()  # Avoid modifying the original DataFrame
+        mCG_reads_df['pos'] = pd.to_numeric(mCG_reads_df['pos'], errors='coerce')
+        mCG_reads_df = mCG_reads_df.dropna(subset=['pos'])  # Remove unmethylated reads for plotting
 
         # Histogram of read distribution
-        reads_df['read_name'].value_counts().plot(kind='bar', title='#mC of individual Reads Distribution')
+        mCG_reads_df['read_name'].value_counts().plot(kind='bar', title='#mC of individual Reads Distribution')
         plt.gca().spines[['top', 'right']].set_visible(False)
         plt.show()
 
         # Scatter plot of modifications
         sns.scatterplot(
-            data=reads_df,
+            data=mCG_reads_df,
             x="pos",
             y="read_name",
             hue="mod",
@@ -720,34 +780,34 @@ def visualize_data(reads_df):
     except Exception as e:
         print("Error in visualization:", e)
 
-def create_padded_reads_no_fully_unmethylated(reads_df, regions_dict, region_length):
+def create_padded_reads_no_fully_unmethylated(mCG_reads_df, region_dict, region_length):
     """Generate padded reads matrix."""
     try:
-        read_names_unique = np.unique(reads_df['read_name'])
+        read_names_unique = np.unique(mCG_reads_df['read_name'])
         num_reads = len(read_names_unique)
         reads_dict = {name: i for i, name in enumerate(read_names_unique)}
         padded_reads = np.full((num_reads, region_length), np.nan)
 
-        for i in range(len(reads_df['read_name'])):
-            padded_reads[reads_dict[reads_df['read_name'][i]], reads_df['pos_shifted'][i]] = 1
+        for i in range(len(mCG_reads_df['read_name'])):
+            padded_reads[reads_dict[mCG_reads_df['read_name'][i]], mCG_reads_df['pos_shifted'][i]] = 1
 
         return padded_reads
     except Exception as e:
         print("Error creating padded reads matrix:", e)
         return None
 
-def create_padded_reads(reads_df, regions_dict, region_length):
+def create_padded_reads(mCG_reads_df, region_dict, region_length):
     """Generate padded reads matrix, including reads with no methylation."""
     try:
         # Ensure 'pos_shifted' is numeric
-        reads_df['pos_shifted'] = pd.to_numeric(reads_df['pos_shifted'], errors='coerce')
+        mCG_reads_df['pos_shifted'] = pd.to_numeric(mCG_reads_df['pos_shifted'], errors='coerce')
 
-        read_names_unique = np.unique(reads_df['read_name'])
+        read_names_unique = np.unique(mCG_reads_df['read_name'])
         num_reads = len(read_names_unique)
         reads_dict = {name: i for i, name in enumerate(read_names_unique)}
         padded_reads = np.full((num_reads, region_length), np.nan)
 
-        for _, row in reads_df.iterrows():
+        for _, row in mCG_reads_df.iterrows():
             if row['pos_shifted'] >= 0:  # Ignore unmethylated reads (set as -1)
                 padded_reads[reads_dict[row['read_name']], int(row['pos_shifted'])] = 1
 
@@ -893,17 +953,17 @@ def mod_vectors_noThreshold_analyze(
     # output_dir,
     # threshold_mC=None,
     ):
-    # extract_file, extract_regions, fig_plot_browser = extract_from_bam(
+    # extract_file, extract_region, fig_plot_browser = extract_from_bam(
     #     experiment_name=experiment_name,
     #     bam_path=bam_path,
     #     ref_genome_file=ref_genome_path,
     #     output_dir=output_dir,
-    #     regions=region_str,
+    #     region=region_str,
     #     motifs=motifs,
     #     output_name='extracted_reads',
     #     threshold_mC=threshold_mC,
     # )
-    sorted_read_tuples, readwise_datasets, regions_dict = load_processed.read_vectors_from_hdf5(
+    sorted_read_tuples, readwise_datasets, region_dict = load_processed.read_vectors_from_hdf5(
                                             extract_file,  # extract_file, #     file: str | Path,
                                             motifs=motifs,  #     motifs: list[str],
                                             regions=region_str,  #     regions: str | Path | list[str | Path] | None = None,
@@ -939,9 +999,9 @@ def mod_vectors_noThreshold_analyze(
                                 title=f"Percentage Distribution of Non-Zero mod_vector Values<br>Experiment: {experiment_name}<br>Region length: {region_length} [{region_str}]",
                                 num_bins=num_bins)
 
-    return sorted_read_tuples, readwise_datasets, regions_dict, aggregated_mod_vector, filtered_mod_vector_no0
+    return sorted_read_tuples, readwise_datasets, region_dict, aggregated_mod_vector, filtered_mod_vector_no0
 
-# sorted_read_tuples, readwise_datasets, regions_dict, aggregated_mod_vector, filtered_mod_vector_no0 = mod_vectors_analyze(
+# sorted_read_tuples, readwise_datasets, region_dict, aggregated_mod_vector, filtered_mod_vector_no0 = mod_vectors_analyze(
 #         experiment_name,
 #         extract_file, # bam_path,
 #         region_str,
@@ -981,12 +1041,12 @@ def main():
     ref_seq_list = get_reference_sequence(ref_genome_v1_1_file, region_chr, region_start, region_end)
 
 
-    extract_file, extract_regions = extract_from_bam(
+    extract_file, extract_region = extract_from_bam(
         experiment_name=experiment_name,
         bam_path=bam_path,
         ref_genome_file=ref_genome_v1_1_file,
         output_dir=output_dir,
-        regions=region_str,
+        region=region_str,
         motifs=motifs,
         output_name='extracted_reads',
         threshold_mC=threshold_mC,
@@ -995,15 +1055,15 @@ def main():
     keep_unmethylated_reads = False
     if extract_file:
         if keep_unmethylated_reads:
-            reads_df, regions_dict = process_extracted_reads(extract_file, region_str, motifs, ref_seq_list)
-            visualize_data(reads_df)
+            mCG_reads_df, region_dict = process_extracted_reads(extract_file, region_str, motifs, ref_seq_list)
+            visualize_data(mCG_reads_df)
 
-            padded_reads = create_padded_reads(reads_df, regions_dict, region_length)
+            padded_reads = create_padded_reads(mCG_reads_df, region_dict, region_length)
         else:
 
-            reads_df, regions_dict = process_extracted_reads_no_fully_unmethylated(extract_file, region_str, motifs, ref_seq_list)
-            visualize_data(reads_df)
-            padded_reads = create_padded_reads_no_fully_unmethylated(reads_df, regions_dict, region_length)
+            mCG_reads_df, region_dict = process_extracted_reads_no_fully_unmethylated(extract_file, region_str, motifs, ref_seq_list)
+            visualize_data(mCG_reads_df)
+            padded_reads = create_padded_reads_no_fully_unmethylated(mCG_reads_df, region_dict, region_length)
         
         if padded_reads is not None:
             plot_padded_reads(padded_reads, ref_seq_list)
