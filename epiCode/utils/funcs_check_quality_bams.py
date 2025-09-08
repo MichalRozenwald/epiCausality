@@ -372,6 +372,7 @@ def plot_reads_quality_heatmap(
     plot_alignment_heatmap(matrix, meta, heatmap_title, vmin=None, vmax=None)
     if save_matrix:
         np.save("alignment_heatmap_matrix.npy", matrix)
+        
 
 
 # import pysam
