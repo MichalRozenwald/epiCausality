@@ -75,6 +75,7 @@ def extract_from_bam(experiment_name, bam_path, ref_genome_file, output_dir, win
         )
 
         if threshold_mC == None: 
+            print("Sort by strand reads post shuffling")
             fig_plot_browser = plot_read_browser.plot_read_browser(
                 mod_file_name=extract_file,# mod_file_name: str | Path,
                 region=region, #region: str,
@@ -82,6 +83,19 @@ def extract_from_bam(experiment_name, bam_path, ref_genome_file, output_dir, win
                 thresh=threshold_mC, # thresh: int | float | None = None,
                 single_strand = False, # : bool = False,
                 sort_by=['shuffle', 'strand'], #: str | list[str] = "shuffle",
+                hover = True, #: bool = True,
+                )
+            fig_plot_browser.update_layout(  
+                title=f"{experiment_name}<br>Extracted Reads for {region}",
+            )
+            print("Do not suffle the reads!")
+            fig_plot_browser = plot_read_browser.plot_read_browser(
+                mod_file_name=extract_file,# mod_file_name: str | Path,
+                region=region, #region: str,
+                motifs=motifs, #motifs: list[str],
+                thresh=threshold_mC, # thresh: int | float | None = None,
+                single_strand = False, # : bool = False,
+                # sort_by=['shuffle', 'strand'], #: str | list[str] = "shuffle",
                 hover = True, #: bool = True,
                 )
             fig_plot_browser.update_layout(  
@@ -103,7 +117,19 @@ def extract_from_bam(experiment_name, bam_path, ref_genome_file, output_dir, win
                 s=1
             )
             plt.xlabel(f'bp relative to {region}')
-            plt.title(f"{experiment_name}<bp>Extracted Reads for {region}")
+            plt.title(f"{experiment_name}\n Extracted Reads for {region} \n Sort reads by strand post shuffling")
+            plt.show()
+
+            plot_reads.plot_reads(
+                extract_file,
+                region,
+                motifs=motifs,
+                window_size=window_size,
+                # sort_by=['shuffle', 'strand'],
+                s=1
+            )
+            plt.xlabel(f'bp relative to {region}')
+            plt.title(f"{experiment_name}\n Extracted Reads for {region} \n Do not suffle the reads")
             plt.show()
         return extract_file, extract_region
     
@@ -459,6 +485,28 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                 # reads_with_overlap_indel_mismatch_counts_df['overlap_aligned_fraction'] = reads_with_overlap_indel_mismatch_counts_df['num_overlap_aligned_bases'] / region_length
                 # Keep only reads with indel_fraction <= indel_fraction_threshold
                 # filtered_reads_with_overlap_indel_mismatch_counts_df = reads_with_overlap_indel_mismatch_counts_df.copy()
+
+
+                # if save_filtered_reads_bam:
+                pre_filtered_reads_bam_name = "pre_filtered_ROI_reads_" + experiment_name + ".bam"
+                pre_filtered_output_bam_path=Path(output_dir, pre_filtered_reads_bam_name)
+                # filtered_output_bam_path
+                subset_BAM_by_read_IDs(original_bam_path, reads_with_overlap_indel_mismatch_counts_df, output_bam_path=pre_filtered_output_bam_path, index_output=True)
+                print(f"Pre Filtered BAM with reads that have some covarage of the ROI written to \n {pre_filtered_reads_bam_name}")
+                plot_reads_quality_heatmap(pre_filtered_output_bam_path, 
+                                            region, 
+                                            ref_genome_path,
+                                            heatmap_title = "Pre filtering within ROI: Reads Quality Heatmap " + experiment_name,
+                                            mode= "quality_signed",
+                                            max_reads =  3000,
+                                            primary_only = True,
+                                            min_mapq = None,  
+                                            save_matrix= False)
+
+
+                #TODO: Plot histogram of the the reads overlap_aligned kengths 
+                # plot_histogram(data, title, num_bins=16,  xaxis_title="mod_vector values")
+
                 filtered_reads_with_overlap_indel_mismatch_counts_df = reads_with_overlap_indel_mismatch_counts_df[reads_with_overlap_indel_mismatch_counts_df['fraction_overlap_aligned'] >= threshold_fraction_overlap_aligned].copy()
                 print(f"After removing reads with <{threshold_fraction_overlap_aligned*100}% threshold_fraction_overlap_aligned: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
 
@@ -754,19 +802,21 @@ def plot_bam_quality_metrics(bam_path):
     
 
     # Read length distribution
-    sns.histplot(read_lengths, bins=50, kde=False, ax=axes[0], color="steelblue")
+    sns.histplot(read_lengths, kde=False, ax=axes[0], color="steelblue") # , bins=100
     axes[0].set_title("Read Length Distribution")
     axes[0].set_xlabel("Read Length (bp)")
     axes[0].set_ylabel("Count")
+    #TODO: make the limit setting an input variable? or plot more distributions of the data
+    axes[0].set_xlim(min(read_lengths), min(max(read_lengths), 50000))
 
     # Mapping quality distribution
-    sns.histplot(mapping_qualities, bins=60, kde=False, ax=axes[1], color="orange")
+    sns.histplot(mapping_qualities, kde=False, ax=axes[1], color="orange") #  bins=60,
     axes[1].set_title("Mapping Quality Distribution")
     axes[1].set_xlabel("Mapping Quality")
     axes[1].set_ylabel("Count")
 
     # Average base quality distribution
-    sns.histplot(avg_base_qualities, bins=50, kde=False, ax=axes[2], color="green")
+    sns.histplot(avg_base_qualities, kde=False, ax=axes[2], color="green") #  bins=50,
     axes[2].set_title("Average Base Quality per Read")
     axes[2].set_xlabel("Average Phred Quality Score")
     axes[2].set_ylabel("Count")
@@ -783,28 +833,28 @@ def plot_bam_quality_metrics(bam_path):
 
 
 
-def visualize_data_old(mCG_reads_df):
-    """Generate visualizations for the data."""
-    try:
-        mCG_reads_df['read_name'].plot(kind='hist', bins=1600, title='#mC of individual Reads Distribution')
-        plt.gca().spines[['top', 'right']].set_visible(False)
-        plt.show()
+# def visualize_data_old(mCG_reads_df):
+#     """Generate visualizations for the data."""
+#     try:
+#         mCG_reads_df['read_name'].plot(kind='hist', bins=1600, title='#mC of individual Reads Distribution')
+#         plt.gca().spines[['top', 'right']].set_visible(False)
+#         plt.show()
 
-        sns.scatterplot(
-            data=mCG_reads_df,
-            x="pos",
-            y="read_name",
-            hue="mod",
-            s=0.5,
-            marker="s",
-            linewidth=0
-        )
-        # plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
-        plt.xlabel('Position')
-        plt.ylabel('Read Name')
-        plt.show()
-    except Exception as e:
-        print("Error in visualization:", e)
+#         sns.scatterplot(
+#             data=mCG_reads_df,
+#             x="pos",
+#             y="read_name",
+#             hue="mod",
+#             s=0.5,
+#             marker="s",
+#             linewidth=0
+#         )
+#         # plt.xticks(ticks=np.arange(len(ref_seq_list)), labels=ref_seq_list, size=font_size) # 'small') #, rotation=90)
+#         plt.xlabel('Position')
+#         plt.ylabel('Read Name')
+#         plt.show()
+#     except Exception as e:
+#         print("Error in visualization:", e)
 
 def visualize_data(mCG_reads_df):
     """Generate visualizations for the data."""
@@ -905,7 +955,7 @@ def save_padded_reads(padded_reads, output_dir, file_name):
 # =======================
 # For unthresholded data plotting:
 
-def plot_histogram(data, title, num_bins=16):
+def plot_histogram(data, title, num_bins=16,  xaxis_title="mod_vector values"):
     # Compute the histogram
     hist, bin_edges = np.histogram(data, bins=num_bins)
 
@@ -922,7 +972,7 @@ def plot_histogram(data, title, num_bins=16):
     # Add labels and title
     fig.update_layout(
         title=title,
-        xaxis_title="mod_vector values",
+        xaxis_title= xaxis_title,
         yaxis_title="Frequency",
         bargap=0.1
     )

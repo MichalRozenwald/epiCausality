@@ -308,7 +308,7 @@ def plot_alignment_heatmap(
     )
 
     if title is None:
-        title = f"Alignment Heatmap [{meta.get('region','?')}] • mode={meta.get('mode','?')}"
+        title = f"Alignment Heatmap [{meta.get('region','?')}] • mode={meta.get('mode','?')} \n Number of reads = {nreads}"
     plt.title(title)
     plt.xlabel("Reference position (offset in window)")
     plt.ylabel("Reads")
@@ -333,7 +333,7 @@ def plot_alignment_heatmap(
     if show_clustered_heatmap:
         # sns.clustermap(G_revs_df.fillna(-1), col_cluster=False)
         g = sns.clustermap(pd.DataFrame(matrix).fillna(100), col_cluster=False, cmap='plasma')  # , cbar_kws={'label': "Y labet") # , 'orientation': 'vertical'
-        g.ax_cbar.set_title("Clustered" + title + "\n Fill NA with +100", pad=16)
+        g.ax_cbar.set_title(f"Clustered {title} \n Fill NA with +100 \n Number of reads = {nreads}", pad=16)
         # Display the plot
         plt.show()
 
