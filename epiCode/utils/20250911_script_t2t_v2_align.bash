@@ -57,8 +57,7 @@ grep -o 'chr' \
   ./5mCG/to_t2t_v2_0/summary_sort_align_t2t_v2_0_trim_20250908_Day35_CROFF_Tcells_2Libraries_Minion_R9.dna_r9.4.1_e8_sup@v3.3.5mCG.tsv \
    | wc -l
 
-# Day 35: 
-
+#  Day 35: 1,165,957 reads  - overlapping chromosome 
 
 # Day 28: 10713 reads   - overlapping chromosome 1 
 
