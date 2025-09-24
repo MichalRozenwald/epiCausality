@@ -506,6 +506,7 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
 
                 #TODO: Plot histogram of the the reads overlap_aligned kengths 
                 # plot_histogram(data, title, num_bins=16,  xaxis_title="mod_vector values")
+                plot_bam_quality_metrics(pre_filtered_output_bam_path)
 
                 filtered_reads_with_overlap_indel_mismatch_counts_df = reads_with_overlap_indel_mismatch_counts_df[reads_with_overlap_indel_mismatch_counts_df['fraction_overlap_aligned'] >= threshold_fraction_overlap_aligned].copy()
                 print(f"After removing reads with <{threshold_fraction_overlap_aligned*100}% threshold_fraction_overlap_aligned: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
