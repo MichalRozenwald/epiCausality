@@ -1,0 +1,67 @@
+
+To download and sync the repository https://github.com/MichalRozenwald/epiCausality.git to your local machine, follow these steps:
+
+1. Clone the Repository
+This step downloads the repository to your local machine:
+
+bash
+Copy code
+git clone https://github.com/MichalRozenwald/epiCausality.git
+This will create a folder named epiCausality in your current directory.
+
+2. Navigate to the Repository
+Change into the repository directory:
+
+bash
+Copy code
+cd epiCausality
+
+
+3. Set Up for Syncing (Optional)
+To ensure you have the latest version of the repository in the future:
+
+Check for updates from the remote:
+bash
+Copy code
+git fetch
+Pull the latest changes to your local branch:
+bash
+Copy code
+git pull origin main
+(Replace main with the correct branch name if it differs.)
+
+
+# Author identity unknown
+
+*** Please tell me who you are.
+
+Run
+
+  git config --global user.email "michal.rozenwald@gmail.com"
+  git config --global user.name "MichalRozenwald"
+* Yo..6!!!
+to set your account's default identity.
+Omit --global to set the identity only in this repository.
+
+fatal: unable to auto-detect email address (got 'michalula@Skynet.(none)')
+
+
+4. Work and Sync Changes (Optional)
+After making changes locally, stage and commit them:
+bash
+Copy code
+git add .
+git commit -m "Your commit message here"
+Push your changes to the remote repository:
+bash
+Copy code
+git push origin main
+
+git push origin main (NOT MASTER)
+
+
+git clone https://github.com/MichalRozenwald/epiCausality.git
+cd epiCausality
+
+git remote add origin https://github.com/MichalRozenwald/epiCausality.git 
+git pull origin master
