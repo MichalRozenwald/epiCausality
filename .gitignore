@@ -1,3 +1,10 @@
 # Ignore all padded*.npy files
 padded_reads*.npy
 *.npy
+*.bam
+*.bai
+*.sam
+*.tsv
+*.h5
+*.hdf5
+*.log

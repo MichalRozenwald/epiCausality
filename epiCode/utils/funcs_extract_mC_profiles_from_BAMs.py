@@ -5,9 +5,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy import stats
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-from datetime import datetime
 import os
 
 from datetime import datetime
@@ -26,12 +26,6 @@ def system_info():
     print('Version:', platform.version())
     print('Processor:', platform.processor())
     print('Python version:', sys.version)
-
-def current_time():
-    """Returns the current date and time as a formatted string."""
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
-# if __name__ == "__main__":
-#     print("Current Date and Time:", current_time())
 
 def get_reference_sequence(ref_genome_file,  region_chr, region_start, region_end):
     """Fetch reference sequence from genome file."""
@@ -291,8 +285,10 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                             keep_full_coverage_reads_only=True,
                             save_indels_mismatches_count_csv_path="indels_mismatches_count.csv",
                             threshold_fraction_overlap_aligned=0.5, threshold_fraction_mismatches=0.5, 
-                            threshold_mapping_qualities=60, threshold_avg_base_qualities=20,
-                            max_reads_plot=3000):
+                            threshold_mapping_qualities=60, threshold_avg_base_qualities=np.nan,
+                            threshold_mode_base_qualities=10,
+                            max_reads_plot=3000,
+                            remove_reads_that_dont_fully_cover_region=True):
                             # indel_fraction_threshold=0.5, non_fraction_threshold=0.5):
     """
     Process extracted reads into a DataFrame, ensuring only reads that cover the full start to end DNA coordinates are included.
@@ -336,6 +332,11 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
     threshold_avg_base_qualities : float, optional
         Threshold for the average base quality allowed per read. Reads with a lower average base quality will be removed.
         Default is 20.
+    threshold_mode_base_qualities : float, optional
+        Threshold for the mode base quality allowed per read. Reads with a lower mode base quality will be removed.
+        Default is 10.
+    remove_reads_that_dont_fully_cover_region : bool, optional
+        If True, removes reads that do not fully cover the region from start to end coordinates. If False, keeps reads that partially cover the region.
 
     # indel_fraction_threshold : float, optional  
     #     Threshold for the fraction of indels (deletions/insertions/soft clips) allowed per read. Reads with a higher fraction will be removed.
@@ -452,7 +453,11 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                     if read_name in read_coord_map:
                         read_start, read_end = read_coord_map[read_name]
                         # Check if read covers the full region (read starts before or at region start and ends after or at region end)
-                        if read_start <= region_start and read_end >= region_end:
+                        if remove_reads_that_dont_fully_cover_region:
+                            if read_start <= region_start and read_end >= region_end:
+                                full_coverage_reads.append(read_name)
+                        # DO NOT FILTER READS THAT THE INCLUDE HACVE EXAXT START OR END EXACTLY AT THE REGION BOUNDARIES
+                        else:
                             full_coverage_reads.append(read_name)
                 
                 # Check overlap between full coverage reads and reads with methylation data
@@ -526,9 +531,14 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                 filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['mapping_qualities'] >= threshold_mapping_qualities].copy()
                 print(f"After removing reads with >{threshold_mapping_qualities} threshold_mapping_qualities: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
 
-                # Remove reads with avg_base_qualities > 20
-                filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['avg_base_qualities'] >= threshold_avg_base_qualities].copy()
-                print(f"After removing reads with >{threshold_avg_base_qualities} threshold_avg_base_qualities: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+                # # Remove reads with avg_base_qualities > 20
+                # if threshold_avg_base_qualities is not np.nan:
+                    # filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['avg_base_qualities'] >= threshold_avg_base_qualities].copy()
+                    # print(f"After removing reads with >{threshold_avg_base_qualities} threshold_avg_base_qualities: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+
+                # Remove reads with avg_base_qualities > 10
+                filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['mode_base_qualities'] >= threshold_mode_base_qualities].copy()
+                print(f"After removing reads with >{threshold_mode_base_qualities} threshold_mode_base_qualities: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
 
                 # # Calculate fraction of Nones per read
                 # filtered_reads_with_indel_mismatch_counts_df['nones_fraction'] = filtered_reads_with_indel_mismatch_counts_df['num_nones'] / region_length
@@ -788,6 +798,10 @@ def plot_bam_quality_metrics(bam_path):
     read_lengths = []
     mapping_qualities = []
     avg_base_qualities = []
+    mode_base_qualities = []
+    median_base_qualities = []
+    num_zeros_base_qualities = []
+    less_10_base_qualities = []
 
     with pysam.AlignmentFile(bam_path, "rb") as bam_file:
         for read in bam_file.fetch(until_eof=True):
@@ -799,40 +813,73 @@ def plot_bam_quality_metrics(bam_path):
             mapping_qualities.append(read.mapping_quality)
             if read.query_qualities is not None:
                 avg_base_qualities.append(np.mean(read.query_qualities))
+                mode_result = stats.mode(read.query_qualities, keepdims=True) # keepdims=True returns array-like output; mode: The array of modal values. count: The number of times each corresponding modal value appears. 
+                # print(f"The mode is: {mode_result.mode[0]}")
+                # print(f"The count is: {mode_result.count[0]}")
+                mode_base_qualities.append(mode_result.mode[0])
+                median_base_qualities.append(np.median(read.query_qualities))
+                num_zeros_base_qualities.append(np.sum(np.array(read.query_qualities) == 0))
+                less_10_base_qualities.append(np.sum(np.array(read.query_qualities) < 10))
             else:
                 avg_base_qualities.append(np.nan)
 
     # Set plot style
     # sns.set(style="whitegrid", font_scale=1.2)
-    sns.set(font_scale=1.2)
+    sns.set(font_scale=1) # 1.2
 
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-    
+    fig, axes = plt.subplots(3, 2, figsize=(18, 16))
 
     # Read length distribution
-    sns.histplot(read_lengths, kde=False, ax=axes[0], color="steelblue") # , bins=100
-    axes[0].set_title("Read Length Distribution")
-    axes[0].set_xlabel("Read Length (bp)")
-    axes[0].set_ylabel("Count")
+    sns.histplot(read_lengths, kde=False, ax=axes[0,0], color="steelblue") # , bins=100
+    axes[0,0].set_title("Read Length Distribution")
+    axes[0,0].set_xlabel("Read Length (bp)")
+    axes[0,0].set_ylabel("Count")
     #TODO: make the limit setting an input variable? or plot more distributions of the data
-    axes[0].set_xlim(min(read_lengths), min(max(read_lengths), 50000))
+    axes[0,0].set_xlim(min(read_lengths), min(max(read_lengths), 50000))
 
     # Mapping quality distribution
-    sns.histplot(mapping_qualities, kde=False, ax=axes[1], color="orange") #  bins=60,
-    axes[1].set_title("Mapping Quality Distribution")
-    axes[1].set_xlabel("Mapping Quality")
-    axes[1].set_ylabel("Count")
+    sns.histplot(mapping_qualities, kde=False, ax=axes[0,1], color="orange", discrete=True) #  bins=60,
+    axes[0,1].set_title("Mapping Quality Distribution")
+    axes[0,1].set_xlabel("Mapping Quality")
+    axes[0,1].set_ylabel("Count")
+
+
+    # Mode base quality distribution
+    sns.histplot(mode_base_qualities, kde=False, ax=axes[1,0], color="purple", discrete=True)#, bins=50)
+    axes[1,0].set_xticks(np.arange(min(mode_base_qualities), max(mode_base_qualities) + 1, 1)) # Ensure x-axis ticks align with discrete values
+    axes[1,0].set_title("Mode Base Quality per Read")
+    axes[1,0].set_xlabel("Mode Phred Quality Score", fontsize=0.3, rotation=45) 
+    axes[1,0].set_ylabel("Count")     
+
+    # Median base quality distribution
+    sns.histplot(median_base_qualities, kde=False, ax=axes[1,1],  color="brown", discrete=True) #  bins=50)
+    axes[1,1].set_title("Median Base Quality per Read")
+    axes[1,1].set_xlabel("Median Phred Quality Score")
+    axes[1,1].set_ylabel("Count")   
+
+    # Number of zero base qualities distribution
+    # sns.histplot(num_zeros_base_qualities, kde=False, ax=axes[2,0], color="red", discrete=True) # , bins=50)
+    # axes[2,0].set_title("Number of Zero Base Qualities per Read")
+    # axes[2,0].set_xlabel("Number of Zero Phred Quality Scores")
+    # axes[2,0].set_ylabel("Count")  
+
+    # less_10_base_qualities distribution
+    sns.histplot(less_10_base_qualities, kde=False, ax=axes[2,0], color="green")#, discrete=True) # , bins=50)
+    axes[2,0].set_title("Number of Base Qualities < 10 per Read")
+    axes[2,0].set_xlabel("Number of Phred Quality Scores < 10")
+    axes[2,0].set_ylabel("Count")
 
     # Average base quality distribution
-    sns.histplot(avg_base_qualities, kde=False, ax=axes[2], color="green") #  bins=50,
-    axes[2].set_title("Average Base Quality per Read")
-    axes[2].set_xlabel("Average Phred Quality Score")
-    axes[2].set_ylabel("Count")
+    sns.histplot(avg_base_qualities, kde=False, ax=axes[2,1], color="green", discrete=True) #,  bins=50)
+    # axes[2,1].set_xticks(np.arange(min(avg_base_qualities), max(avg_base_qualities) + 1, 1)) # Ensure x-axis ticks align with discrete values
+    axes[2,1].set_title("Average Base Quality per Read")
+    axes[2,1].set_xlabel("Average Phred Quality Score")#, fontsize=2)
+    axes[2,1].set_ylabel("Count")
 
     # plt.title(f"Run Quality for bam file \n {os.path.basename(bam_path)}\n Total reads processed: {len(read_lengths)}")
     plt.suptitle(f"Run Quality for bam file \n {os.path.basename(bam_path)}\n Total reads processed: {len(read_lengths)}", fontsize=12) 
 
-    fig.subplots_adjust(top=0.88) # Adjust this value as needed
+    # fig.subplots_adjust(top=0.88) # Adjust this value as needed
 
     plt.tight_layout()
     plt.show()
@@ -1126,7 +1173,6 @@ def mod_vectors_noThreshold_analyze(
 def main():
     """Main function to execute all tasks."""
     system_info()
-    print("Current Date and Time:", current_time())
 
     experiment_name = "unedited_T_primerES_nCATS"
     threshold_mC =  0.7 #  0.9 #0.99

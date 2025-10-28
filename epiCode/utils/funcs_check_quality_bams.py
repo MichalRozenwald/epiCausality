@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional, Tuple, Dict, List
 import seaborn as sns
 import matplotlib.pyplot as plt
+from scipy import stats
 
 ''' 
 1. > "How are the quality scores and alignment scores calculated?"
@@ -331,11 +332,14 @@ def plot_alignment_heatmap(
 
     # Create the clustermap and customize the colorbar
     if show_clustered_heatmap:
-        # sns.clustermap(G_revs_df.fillna(-1), col_cluster=False)
-        g = sns.clustermap(pd.DataFrame(matrix).fillna(100), col_cluster=False, cmap='plasma')  # , cbar_kws={'label': "Y labet") # , 'orientation': 'vertical'
-        g.ax_cbar.set_title(f"Clustered {title} \n Fill NA with +100 \n Number of reads = {nreads}", pad=16)
-        # Display the plot
-        plt.show()
+        if matrix.shape[0] >= 2:
+            # sns.clustermap(G_revs_df.fillna(-1), col_cluster=False)
+            g = sns.clustermap(pd.DataFrame(matrix).fillna(100), col_cluster=False, cmap='plasma')  # , cbar_kws={'label': "Y labet") # , 'orientation': 'vertical'
+            g.ax_cbar.set_title(f"Clustered {title} \n Fill NA with +100 \n Number of reads = {nreads}", pad=16)
+            # Display the plot
+            plt.show()
+        else:
+            print("Not enough reads for Clustered Heatmap with " + str(matrix.shape[0])+ " reads.")
 
 
 def plot_reads_quality_heatmap(
@@ -409,6 +413,11 @@ def count_indels_and_mismatches(bam_path, ref_genome_path, region=None, output_c
     mapping_qualities = []
     avg_base_qualities = []
 
+    mode_base_qualities = []
+    median_base_qualities = []
+    num_zeros_base_qualities = []
+    less_10_base_qualities = []
+
     with pysam.AlignmentFile(str(bam_path), "rb") as bam:
         if region:
             chrom, rng = region.split(":")
@@ -433,6 +442,12 @@ def count_indels_and_mismatches(bam_path, ref_genome_path, region=None, output_c
             mapping_qualities.append(read.mapping_quality)
             if read.query_qualities is not None:
                 avg_base_qualities.append(np.mean(read.query_qualities))
+                mode_result = stats.mode(read.query_qualities, keepdims=True) # keepdims=True returns array-like output; mode: The array of modal values. count: The number of times each corresponding modal value appears. # print(f"The mode is: {mode_result.mode[0]}") # print(f"The count is: {mode_result.count[0]}")
+                mode_base_qualities.append(mode_result.mode[0])
+                median_base_qualities.append(np.median(read.query_qualities))
+                num_zeros_base_qualities.append(np.sum(np.array(read.query_qualities) == 0))
+                less_10_base_qualities.append(np.sum(np.array(read.query_qualities) < 10))
+
             else:
                 avg_base_qualities.append(np.nan)
 
@@ -475,7 +490,9 @@ def count_indels_and_mismatches(bam_path, ref_genome_path, region=None, output_c
                 "read_name_str": read.query_name,
                 "read_lengths": read.query_length,
                 "mapping_qualities": read.mapping_quality,
-                "avg_base_qualities": avg_base_qualities[-1],
+                "avg_base_qualities": avg_base_qualities[-1] if len(avg_base_qualities) > 0 else np.nan,
+                "mode_base_qualities": mode_base_qualities[-1] if len(mode_base_qualities) > 0 else np.nan,
+                "median_base_qualities": median_base_qualities[-1] if len(median_base_qualities) > 0 else np.nan,
                 "num_overlap_aligned_bases": num_overlap_aligned_bases,
                 "fraction_overlap_aligned": num_overlap_aligned_bases / (end - start) if region else None,
                 # "num_indels": num_indels,
