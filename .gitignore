@@ -8,3 +8,7 @@ padded_reads*.npy
 *.h5
 *.hdf5
 *.log
+*.h5
+*.gz
+*.tbi
+# *.bed*
