@@ -284,8 +284,10 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                             experiment_name, output_dir, 
                             keep_full_coverage_reads_only=True,
                             save_indels_mismatches_count_csv_path="indels_mismatches_count.csv",
-                            threshold_fraction_overlap_aligned=0.5, threshold_fraction_mismatches=0.5, 
-                            threshold_mapping_qualities=60, threshold_avg_base_qualities=np.nan,
+                            threshold_fraction_overlap_aligned=0.5, 
+                            threshold_fraction_mismatches=0.5, 
+                            threshold_mapping_qualities=60, 
+                            threshold_avg_base_qualities=np.nan,
                             threshold_mode_base_qualities=10,
                             max_reads_plot=3000,
                             remove_reads_that_dont_fully_cover_region=True):
@@ -532,9 +534,9 @@ def process_extracted_reads(extract_file, original_bam_path, region, motifs,
                 print(f"After removing reads with >{threshold_mapping_qualities} threshold_mapping_qualities: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
 
                 # # Remove reads with avg_base_qualities > 20
-                # if threshold_avg_base_qualities is not np.nan:
-                    # filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['avg_base_qualities'] >= threshold_avg_base_qualities].copy()
-                    # print(f"After removing reads with >{threshold_avg_base_qualities} threshold_avg_base_qualities: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
+                if threshold_avg_base_qualities is not np.nan:
+                    filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['avg_base_qualities'] >= threshold_avg_base_qualities].copy()
+                    print(f"After removing reads with >{threshold_avg_base_qualities} threshold_avg_base_qualities: {len(np.unique(filtered_reads_with_overlap_indel_mismatch_counts_df['read_name_str']))} reads with methylation data")
 
                 # Remove reads with avg_base_qualities > 10
                 filtered_reads_with_overlap_indel_mismatch_counts_df = filtered_reads_with_overlap_indel_mismatch_counts_df[filtered_reads_with_overlap_indel_mismatch_counts_df['mode_base_qualities'] >= threshold_mode_base_qualities].copy()
