@@ -1,0 +1,62 @@
+[modkit-logging/src/lib.rs::69][2025-11-18 11:02:25][DEBUG] command line: modkit pileup /home/michalula/code/epiCausality/epiCode/analyze_ont_data/T2T_v2.0_mapped/T_cells/day_35/croff/replica_2b/analyze_single_reads/dimelo_v2_output/filtered_reads_overlap_MORE_than_0.9_replica2B_Day35_CRISPRoff_Tcells_postEP_R9minion_threshold_mC0.7_T2Tv2_0_filterMode10_NoFullyUnmeth_ovrlap0.9_mismat0.7_mapQ60.bam /home/michalula/code/epiCausality/epiCode/analyze_ont_data/T2T_v2.0_mapped/T_cells/day_35/croff/replica_2b/analyze_single_reads/dimelo_v2_output/new_dmr_pileup/20251118_repl2b_Filter_mC07_pileup_CROFF_Day35_Tcells.bed --cpg --ref /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa --threads 32 --log-filepath log.txt
+[modkit-core/src/command_utils.rs::295][2025-11-18 11:02:25][INFO] calculated chunk size: 48, interval size 100000, processing 4800000 positions concurrently
+[modkit-core/src/pileup/subcommand.rs::536][2025-11-18 11:02:25][INFO] filtering to only CpG motifs
+[modkit-core/src/command_utils.rs::102][2025-11-18 11:02:25][INFO] attempting to sample 10042 reads
+[modkit-core/src/reads_sampler/mod.rs::49][2025-11-18 11:02:25][DEBUG] found BAM index, sampling reads in 1000000 base pair chunks
+[modkit-core/src/reads_sampler/sampling_schedule.rs::261][2025-11-18 11:02:25][DEBUG] removed 0 contigs from schedule with <= 1 reads
+[modkit-core/src/reads_sampler/sampling_schedule.rs::141][2025-11-18 11:02:25][DEBUG] derived sampling schedule, sampling total 254 reads from 7 contigs, 0 unmapped reads
+[modkit-core/src/reads_sampler/sampling_schedule.rs::164][2025-11-18 11:02:25][DEBUG] schedule
+ chrom  count/frac 
+ 0      245 
+ 8      3 
+ 10     2 
+ 18     1 
+ 1      1 
+ 14     1 
+ 6      1 
+
+[modkit-core/src/interval_chunks.rs::531][2025-11-18 11:02:25][DEBUG] there are 7 contig(s) to work on (7 parts)
+[modkit-core/src/interval_chunks.rs::558][2025-11-18 11:02:25][DEBUG] no more records to process
+[modkit-core/src/reads_sampler/mod.rs::390][2025-11-18 11:02:25][DEBUG] final mapped reads sampled:
+ 0      48 
+ 8      0 
+ 10     0 
+ 18     0 
+ 1      0 
+ 6      0 
+ 14     0 
+ total  48 
+
+[modkit-core/src/reads_sampler/mod.rs::126][2025-11-18 11:02:25][DEBUG] sampled 48 records
+[modkit-core/src/command_utils.rs::123][2025-11-18 11:02:25][DEBUG] estimated pass threshold 0.7988281 for primary sequence base C
+[modkit-core/src/pileup/subcommand.rs::655][2025-11-18 11:02:25][INFO] Using filter threshold 0.7988281 for C.
+[modkit-core/src/interval_chunks.rs::531][2025-11-18 11:02:25][DEBUG] there are 25 contig(s) to work on (25 parts)
+[modkit-core/src/interval_chunks.rs::558][2025-11-18 11:02:49][DEBUG] no more records to process
+[modkit-core/src/pileup/subcommand.rs::812][2025-11-18 11:02:49][INFO] Done, processed 286 rows. Processed ~245 reads and skipped zero reads.
+[modkit-logging/src/lib.rs::69][2025-11-18 11:05:24][DEBUG] command line: modkit pileup /home/michalula/code/epiCausality/epiCode/analyze_ont_data/T2T_v2.0_mapped/K562/post_sort/ZFPoff_sortHIGH/analyze_single_reads/dimelo_v2_output/filtered_reads_overlap_MORE_than_0.9_K562_ZFPoff_PostSort_HIGH_Day16_postEP_R9minion_threshold_mC0.7_T2Tv2_0_filterMode10_NoFullyUnmeth_ovrlap0.9_mismat0.7_mapQ60.bam /home/michalula/code/epiCausality/epiCode/analyze_ont_data/T2T_v2.0_mapped/K562/post_sort/ZFPoff_sortHIGH/analyze_single_reads/dimelo_v2_output/new_dmr_pileup/20251118_pileup_K562_ZoffHigh_Filter_mC07.bed --cpg --ref /home/michalula/data/ref_genomes/t2t_v2_0/chm13v2.0.fa --threads 32 --log-filepath log.txt
+[modkit-core/src/command_utils.rs::295][2025-11-18 11:05:24][INFO] calculated chunk size: 48, interval size 100000, processing 4800000 positions concurrently
+[modkit-core/src/pileup/subcommand.rs::536][2025-11-18 11:05:24][INFO] filtering to only CpG motifs
+[modkit-core/src/command_utils.rs::102][2025-11-18 11:05:24][INFO] attempting to sample 10042 reads
+[modkit-core/src/reads_sampler/mod.rs::49][2025-11-18 11:05:24][DEBUG] found BAM index, sampling reads in 1000000 base pair chunks
+[modkit-core/src/reads_sampler/sampling_schedule.rs::261][2025-11-18 11:05:24][DEBUG] removed 0 contigs from schedule with <= 1 reads
+[modkit-core/src/reads_sampler/sampling_schedule.rs::141][2025-11-18 11:05:24][DEBUG] derived sampling schedule, sampling total 1437 reads from 3 contigs, 0 unmapped reads
+[modkit-core/src/reads_sampler/sampling_schedule.rs::164][2025-11-18 11:05:24][DEBUG] schedule
+ chrom  count/frac 
+ 0      1435 
+ 16     1 
+ 3      1 
+
+[modkit-core/src/interval_chunks.rs::531][2025-11-18 11:05:24][DEBUG] there are 3 contig(s) to work on (3 parts)
+[modkit-core/src/interval_chunks.rs::558][2025-11-18 11:05:24][DEBUG] no more records to process
+[modkit-core/src/reads_sampler/mod.rs::390][2025-11-18 11:05:24][DEBUG] final mapped reads sampled:
+ 0      54 
+ 16     0 
+ 3      0 
+ total  54 
+
+[modkit-core/src/reads_sampler/mod.rs::126][2025-11-18 11:05:24][DEBUG] sampled 54 records
+[modkit-core/src/command_utils.rs::123][2025-11-18 11:05:24][DEBUG] estimated pass threshold 0.7832031 for primary sequence base C
+[modkit-core/src/pileup/subcommand.rs::655][2025-11-18 11:05:24][INFO] Using filter threshold 0.7832031 for C.
+[modkit-core/src/interval_chunks.rs::531][2025-11-18 11:05:24][DEBUG] there are 25 contig(s) to work on (25 parts)
+[modkit-core/src/interval_chunks.rs::558][2025-11-18 11:05:48][DEBUG] no more records to process
+[modkit-core/src/pileup/subcommand.rs::812][2025-11-18 11:05:48][INFO] Done, processed 443 rows. Processed ~1436 reads and skipped zero reads.
