@@ -1,4 +1,4 @@
-track name="DMRs_score_red_gradient_K562_ZFPoffHigh_vs_Unedit_filtered_mC07" description="DMRs colored by LMLR score (red gradient, max score = brightest red) K562_ZFPoffHigh_vs_Unedit_filtered_mC07" visibility=2 itemRgb="On"
+track name="DMRs_LMLR_score_red_gradient_K562_ZFPoffHigh_vs_Unedit_filtered_mC07" description="DMRs colored by LMLR score (red gradient, max score = brightest red) K562_ZFPoffHigh_vs_Unedit_filtered_mC07" visibility=2 itemRgb="On"
 chr1	207317793	207317794	CG_-1.+	0	.	207317793	207317794	50,0,0
 chr1	207317794	207317795	CG_-1.-	0	.	207317794	207317795	50,0,0
 chr1	207317877	207317878	CG_0.+	12	.	207317877	207317878	52,0,0
